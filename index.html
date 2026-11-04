@@ -7,6 +7,11 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#FBF5EC" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#17120E" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="הדרך הביתה">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
 <title>הדרך הביתה</title>
 <style>
 :root {
@@ -168,6 +173,7 @@ input[type=date]::-webkit-date-and-time-value { text-align: right; }
 .inline-icon { display: inline-block; vertical-align: -4px; color: var(--action); }
 .banner { position: sticky; top: 0; z-index: 15; padding: 10px 16px; padding-top: calc(10px + env(safe-area-inset-top)); text-align: center; font-size: 14.5px; font-weight: 600; background: var(--warn-bg); color: var(--warn); }
 .banner[hidden] { display: none; }
+.banner.update { display: block; width: 100%; border: 0; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; background: var(--action-bg); color: var(--on-action); }
 .tabs {
   position: fixed; inset: auto 0 0 0; z-index: 10; display: flex; justify-content: space-around;
   padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line);
@@ -199,6 +205,7 @@ input[type=date]::-webkit-date-and-time-value { text-align: right; }
 </style>
 </head>
 <body>
+<button id="banner-update" class="banner update" hidden>יש עדכון, הקש לרענון</button>
 <div id="banner-storage" class="banner" role="alert" hidden>הפרטים לא נשמרים. פתח את האפליקציה מהאייקון במסך הבית.</div>
 <main id="view" tabindex="-1"></main>
 <nav class="tabs" aria-label="ניווט ראשי">
@@ -540,6 +547,30 @@ input[type=date]::-webkit-date-and-time-value { text-align: right; }
   if (!standalone && !location.hash && !load('hb.installSeen', false)) location.replace('#install');
   showBanner();
   render();
+
+  // Offline and updates: sw.js caches everything. A new version waits until he taps the banner.
+  if ('serviceWorker' in navigator) {
+    const hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      const offer = w => {
+        if (!w || !hadController) return; // first install: nothing to update yet
+        const b = document.getElementById('banner-update');
+        b.hidden = false;
+        b.onclick = () => w.postMessage('skipWaiting');
+      };
+      offer(reg.waiting);
+      reg.addEventListener('updatefound', () => {
+        const w = reg.installing;
+        w.addEventListener('statechange', () => { if (w.state === 'installed') offer(w); });
+      });
+      document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') reg.update().catch(() => {}); });
+    }).catch(() => {});
+    let reloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (hadController && !reloading) { reloading = true; location.reload(); }
+    });
+  }
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persisted().then(p => p || navigator.storage.persist()).catch(() => {});
 })();
 </script>
 </body>
