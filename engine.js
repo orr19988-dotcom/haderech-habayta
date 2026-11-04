@@ -147,7 +147,7 @@
   const ENT = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
   function inline(text) {
     return String(text).split(RUN)
-      .map((part, i) => (i % 2 ? `<bdi>${part}</bdi>` : part.replace(/[&<>"']/g, c => ENT[c]))).join('');
+      .map((part, i) => (i % 2 ? `<bdi dir="ltr">${part}</bdi>` : part.replace(/[&<>"']/g, c => ENT[c]))).join('');
   }
 
   return { addDays, addMonths, addYears, diffDays, isValidISO, checkProfile, computeDeadlines, upcoming, toICS, waUrl, inline };

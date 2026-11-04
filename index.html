@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#FBF5EC" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17120E" media="(prefers-color-scheme: dark)">
+<title>הדרך הביתה</title>
+<style>
+:root {
+  --bg: #FBF5EC; --card: #FFFFFF; --text: #2B2118; --muted: #7A6A58; --line: #F0E6D8;
+  --action: #C2410C; --action-bg: #C2410C; --on-action: #FFFFFF; --progress: #0F766E;
+  --soft: #FCEBDD; --teal-soft: #E3F2EF; --warn-bg: #FFF1E2; --warn: #9A3412;
+  --shadow: 0 1px 2px rgba(43, 33, 24, .05), 0 6px 18px rgba(43, 33, 24, .06);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17120E; --card: #231B15; --text: #F4ECE2; --muted: #B5A493; --line: #3A2E25;
+    --action: #FB923C; --action-bg: #C2410C; --on-action: #FFFFFF; --progress: #2DD4BF;
+    --soft: #3A2414; --teal-soft: #12302C; --warn-bg: #3A2414; --warn: #FDBA74; --shadow: none;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 17px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  padding-bottom: calc(76px + env(safe-area-inset-bottom));
+}
+main { max-width: 600px; margin: 0 auto; padding: max(16px, env(safe-area-inset-top)) 16px 24px; }
+main:focus, h1:focus { outline: none; }
+h1 { font-size: 28px; line-height: 1.2; margin: 2px 0 6px; letter-spacing: -.01em; }
+h2 { font-size: 19px; line-height: 1.3; margin: 0 0 6px; }
+h3 { font-size: 17px; line-height: 1.35; margin: 0 0 2px; }
+p { margin: 0 0 8px; }
+a { color: var(--action); }
+small { font-size: 14px; }
+.muted { color: var(--muted); }
+.small { font-size: 14px; }
+.lead { font-size: 18px; color: var(--muted); margin: 0 0 4px; }
+.eyebrow { font-size: 13px; font-weight: 700; color: var(--action); margin: 0 0 2px; letter-spacing: .02em; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.icon-btn {
+  flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%;
+  background: var(--card); color: var(--text); box-shadow: var(--shadow);
+}
+.card { display: block; background: var(--card); border-radius: 18px; padding: 16px; margin: 12px 0; box-shadow: var(--shadow); color: inherit; text-decoration: none; }
+.spread { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px;
+  padding: 10px 18px; border-radius: 12px; border: 0; background: var(--action-bg); color: var(--on-action);
+  font: inherit; font-weight: 600; text-decoration: none; cursor: pointer;
+}
+.btn.ghost { background: transparent; color: var(--action); box-shadow: inset 0 0 0 1.5px var(--line); }
+.btn.small { min-height: 38px; padding: 6px 12px; font-size: 15px; }
+.btn.block { display: flex; width: 100%; margin-top: 10px; }
+.btn[disabled] { opacity: .45; }
+:focus-visible { outline: 3px solid var(--action); outline-offset: 2px; }
+.bar { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; margin-top: 8px; }
+.bar i { display: block; height: 100%; background: var(--progress); border-radius: 99px; }
+.chip {
+  display: inline-block; font-size: 12.5px; line-height: 1.45; padding: 1px 8px; border-radius: 99px;
+  background: var(--teal-soft); color: var(--progress); font-weight: 600; white-space: nowrap; vertical-align: 1px;
+}
+.chip.unverified, .chip.warn { background: var(--warn-bg); color: var(--warn); }
+p.chip { display: block; white-space: normal; border-radius: 10px; padding: 6px 10px; font-size: 14px; margin: 6px 0; }
+.list { list-style: none; margin: 0; padding: 0; }
+.hero { padding: 20px 18px; }
+.count { display: flex; align-items: baseline; gap: 8px; margin: 4px 0 8px; }
+.count b { font-size: 56px; line-height: 1; font-weight: 800; color: var(--action); font-variant-numeric: tabular-nums; }
+.count span { font-size: 18px; color: var(--muted); font-weight: 600; }
+.rel { font-weight: 600; color: var(--progress); white-space: nowrap; }
+.mini li a {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: baseline;
+  padding: 10px 0; border-top: 1px solid var(--line); color: var(--text); text-decoration: none;
+}
+.mini li:first-child a { border-top: 0; }
+.mini-date { color: var(--muted); font-size: 14.5px; font-variant-numeric: tabular-nums; }
+.mini .rel { font-size: 13.5px; }
+.links li { padding: 6px 0; }
+.dl { display: flex; gap: 12px; padding: 14px 0; border-top: 1px solid var(--line); }
+.dl:first-child { border-top: 0; }
+.dl-date {
+  flex: none; width: 54px; height: 58px; border-radius: 12px; background: var(--soft); color: var(--action);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.15;
+}
+.dl-date b { font-size: 22px; font-variant-numeric: tabular-nums; }
+.dl-date span { font-size: 12px; font-weight: 700; }
+.dl-body { flex: 1; min-width: 0; }
+.dl-when { font-size: 14.5px; color: var(--muted); }
+.dl.past { opacity: .6; }
+.dl.past .rel { color: var(--muted); }
+details.card summary { cursor: pointer; font-weight: 600; min-height: 28px; }
+.stage { font-size: 15px; color: var(--muted); font-weight: 700; margin: 22px 4px 0; }
+.links-card { padding: 2px 16px; }
+.glink { display: flex; align-items: center; gap: 12px; padding: 12px 0; color: var(--text); text-decoration: none; border-top: 1px solid var(--line); }
+.links-card li:first-child .glink { border-top: 0; }
+.num {
+  flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--soft); color: var(--action);
+  display: grid; place-items: center; font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums;
+}
+.gtext { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.gtext small { color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.glink svg { flex: none; color: var(--muted); }
+.back { display: inline-flex; align-items: center; gap: 4px; min-height: 40px; color: var(--muted); text-decoration: none; font-size: 15px; font-weight: 600; }
+.summary { background: var(--soft); border-radius: 16px; padding: 14px 16px; margin: 12px 0; border-inline-start: 4px solid var(--action); }
+.kicker { font-size: 14px; color: var(--action); margin: 0 0 2px; }
+.summary p { margin: 0; }
+.sec h2 { margin: 24px 0 8px; }
+.items { margin: 0; padding-inline-start: 22px; }
+.items li { margin: 0 0 10px; }
+ol.items li::marker { color: var(--action); font-weight: 700; }
+.sec.traps .items { background: var(--warn-bg); border-radius: 16px; padding: 14px 16px 6px; padding-inline-start: 34px; }
+.src { font: inherit; font-size: 12.5px; color: var(--muted); background: none; border: 0; padding: 2px; cursor: pointer; vertical-align: 2px; }
+.sources { padding-inline-start: 22px; }
+.sources li { margin: 0 0 8px; font-size: 15px; }
+.sources li.flash { background: var(--soft); border-radius: 8px; }
+.next { display: flex; flex-direction: column; gap: 2px; }
+.check-row { padding: 4px 0; border-top: 1px solid var(--line); }
+.check-row:first-child { border-top: 0; }
+.check { display: flex; gap: 12px; align-items: flex-start; padding: 8px 0 2px; cursor: pointer; }
+.check input {
+  -webkit-appearance: none; appearance: none; flex: none; width: 26px; height: 26px; margin: 1px 0 0;
+  border-radius: 8px; border: 2px solid var(--muted); background: var(--card); display: grid; place-items: center;
+}
+.check input:checked { background: var(--progress); border-color: var(--progress); }
+.check input:checked::after { content: ""; width: 7px; height: 13px; border: solid #fff; border-width: 0 3px 3px 0; transform: translateY(-1px) rotate(45deg); }
+.check input:checked + span { color: var(--muted); text-decoration: line-through; }
+.check-row .link { display: inline-block; margin-inline-start: 38px; font-size: 14px; padding: 2px 0 6px; }
+.call {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 60px;
+  padding: 12px 16px; margin: 10px 0; border-radius: 16px; background: var(--card); box-shadow: var(--shadow);
+  color: var(--text); text-decoration: none;
+}
+.call-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.call-text small { color: var(--muted); }
+.call-num { flex: none; font-size: 20px; font-weight: 800; color: var(--action); font-variant-numeric: tabular-nums; }
+.place .addr, .place .th { text-align: right; color: var(--muted); font-size: 15px; }
+.field { padding: 14px 0; border-top: 1px solid var(--line); }
+.field:first-child { border-top: 0; padding-top: 2px; }
+.field label, .field legend { display: block; font-weight: 700; margin-bottom: 2px; padding: 0; }
+.help { font-size: 14px; color: var(--muted); margin: 0 0 8px; }
+fieldset { border: 0; margin: 0; min-width: 0; }
+input[type=date], input[type=text] {
+  font: inherit; width: 100%; min-height: 46px; padding: 8px 12px; border-radius: 12px;
+  border: 1.5px solid var(--line); background: var(--bg); color: var(--text);
+}
+input[type=date]::-webkit-date-and-time-value { text-align: right; }
+.date-row { display: flex; gap: 8px; align-items: center; }
+.warnmsg { color: var(--warn); font-size: 14px; font-weight: 600; margin: 6px 0 0; }
+.warnmsg:empty { display: none; }
+.seg label {
+  display: flex; gap: 10px; align-items: center; padding: 10px 12px; margin: 8px 0 0; border-radius: 12px;
+  border: 1.5px solid var(--line); background: var(--bg); font-weight: 400; cursor: pointer;
+}
+.seg label:has(input:checked) { border-color: var(--action); background: var(--soft); }
+.seg input { accent-color: var(--action); width: 20px; height: 20px; margin: 0; flex: none; }
+.seg span { display: flex; flex-direction: column; }
+.seg small { color: var(--muted); }
+.note { display: flex; gap: 8px; align-items: flex-start; font-size: 14.5px; color: var(--muted); margin: 12px 4px; }
+.note svg { flex: none; margin-top: 2px; }
+.foot { text-align: center; font-size: 14.5px; color: var(--muted); margin: 20px 0 8px; }
+.steps-install li { margin-bottom: 12px; }
+.inline-icon { display: inline-block; vertical-align: -4px; color: var(--action); }
+.banner { position: sticky; top: 0; z-index: 15; padding: 10px 16px; padding-top: calc(10px + env(safe-area-inset-top)); text-align: center; font-size: 14.5px; font-weight: 600; background: var(--warn-bg); color: var(--warn); }
+.banner[hidden] { display: none; }
+.tabs {
+  position: fixed; inset: auto 0 0 0; z-index: 10; display: flex; justify-content: space-around;
+  padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line);
+  background: var(--card); background: color-mix(in srgb, var(--card) 86%, transparent);
+  -webkit-backdrop-filter: saturate(1.6) blur(16px); backdrop-filter: saturate(1.6) blur(16px);
+}
+.tabs a {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  min-height: 50px; font-size: 11.5px; font-weight: 600; color: var(--muted); text-decoration: none;
+}
+.tabs a[aria-current=page] { color: var(--action); }
+#toast {
+  position: fixed; left: 16px; right: 16px; bottom: calc(86px + env(safe-area-inset-bottom)); z-index: 20;
+  max-width: 420px; margin: 0 auto; padding: 12px 16px; border-radius: 14px; text-align: center; font-size: 15px;
+  background: var(--text); color: var(--bg); opacity: 0; transform: translateY(8px); transition: opacity .2s, transform .2s; pointer-events: none;
+}
+#toast.show { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { #toast { transition: none; } }
+#print { display: none; }
+@media print {
+  body { background: #fff; color: #000; padding: 0; font-size: 12pt; }
+  body > *:not(#print) { display: none !important; }
+  #print { display: block; }
+  #print h1 { font-size: 18pt; margin: 0 0 4pt; }
+  #print h2 { font-size: 14pt; margin: 14pt 0 6pt; }
+  #print table { width: 100%; border-collapse: collapse; }
+  #print td { border: 1px solid #999; padding: 4pt 6pt; text-align: start; vertical-align: top; }
+}
+</style>
+</head>
+<body>
+<div id="banner-storage" class="banner" role="alert" hidden>הפרטים לא נשמרים. פתח את האפליקציה מהאייקון במסך הבית.</div>
+<main id="view" tabindex="-1"></main>
+<nav class="tabs" aria-label="ניווט ראשי">
+  <a href="#home" data-tab="home"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/><path d="M10 19.5v-5h4v5"/></svg>בית</a>
+  <a href="#deadlines" data-tab="deadlines"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg>מועדים</a>
+  <a href="#guides" data-tab="guides"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6.5C9.8 5 7 4.6 4 5.5v13c3-.9 5.8-.5 8 1 2.2-1.5 5-1.9 8-1v-13c-3-.9-5.8-.5-8 1z"/><path d="M12 6.5v13"/></svg>מדריכים</a>
+  <a href="#checklist" data-tab="checklist"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="m8 12.2 2.8 2.8L16 9.5"/></svg>צ׳קליסט</a>
+  <a href="#emergency" data-tab="emergency"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3.5h3l1.5 4.5-2 1.2a11 11 0 0 0 5.8 5.8l1.2-2 4.5 1.5v3a2 2 0 0 1-2 2A16.5 16.5 0 0 1 4.5 5.5a2 2 0 0 1 2-2z"/></svg>חירום</a>
+</nav>
+<div id="toast" role="status" aria-live="polite"></div>
+<section id="print"></section>
+<script src="engine.js"></script>
+<script src="content.js"></script>
+<script>
+(function () {
+  'use strict';
+  const E = window.Engine, C = window.CONTENT;
+  const view = document.getElementById('view');
+
+  const STAGES = { before: 'לפני שהעבודה נגמרת', vacation: 'חודשיים חופשה', israel: 'מול ישראל', after: 'אחרי העזיבה', always: 'בכל שלב' };
+  const KINDS = [['rights', 'מה מגיע לך ומה חובה'], ['steps', 'צעד אחר צעד'], ['docs', 'מסמכים'], ['where', 'איפה ומתי'], ['cost', 'כמה עולה'], ['traps', 'מלכודות']];
+  const TAGS = { unverified: 'לא אומת', discretion: 'שיקול דעת של הפקיד', varies: 'משתנה בין משרדים' };
+  const FIELD = {
+    lastWorkDay: ['יום העבודה האחרון', 'ממנו מחושבים היום האחרון של ההיתר, השכר האחרון וה-50 Tawi.'],
+    last90: ['דיווח 90 היום האחרון שלך', 'התאריך שבו הגשת אותו. אם עוד לא הגשת, תאריך הכניסה האחרונה לתאילנד.'],
+    moveOut: ['היציאה מהדירה', 'היום שבו אתה מחזיר את המפתחות.'],
+    touristEntry: ['הכניסה לתאילנד כתייר', 'אחרי שהעבודה נגמרת.'],
+    stampUntil: ['התאריך שבחותמת הכניסה', 'עד מתי מותר לך לשהות לפי החותמת בדרכון. אם יש, הוא מדויק יותר מהחישוב.'],
+    flightHome: ['הטיסה הביתה', ''],
+    leftIsraelOn: ['היום שבו עזבת את ישראל', 'בשביל הטבות המכס של תושב חוזר. אם ביקרת בארץ מאז, קרא את המדריך על המכס.'],
+    birthDate: ['תאריך לידה (רשות)', 'רק בשביל חלון התביעה של כספי ה-SSO.'],
+  };
+  const ORDER = ['lastWorkDay', 'last90', 'moveOut', 'route', 'touristEntry', 'stampUntil', 'flightHome', 'leftIsraelOn', 'birthDate'];
+  const I = {
+    me: '<circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c1.4-3.8 4.2-5.6 7.5-5.6s6.1 1.8 7.5 5.6"/>',
+    back: '<path d="m9 5 7 7-7 7"/>',
+    chev: '<path d="m15 5-7 7 7 7"/>',
+    chat: '<path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.5-4.1A8 8 0 1 1 20 11.5z"/>',
+    phone: '<path d="M6.5 3.5h3l1.5 4.5-2 1.2a11 11 0 0 0 5.8 5.8l1.2-2 4.5 1.5v3a2 2 0 0 1-2 2A16.5 16.5 0 0 1 4.5 5.5a2 2 0 0 1 2-2z"/>',
+    pin: '<path d="M12 21s-6.5-5.8-6.5-11a6.5 6.5 0 0 1 13 0c0 5.2-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>',
+    info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.6v.1"/>',
+    share: '<path d="M12 3.5v11M8.5 7 12 3.5 15.5 7"/><path d="M8 10.5H6v10h12v-10h-2"/>',
+  };
+  const svg = (p, s = 24) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+
+  const guides = C.guides.slice().sort((a, b) => a.order - b.order);
+  const guideById = Object.fromEntries(guides.map(g => [g.id, g]));
+  const T = s => E.inline(s);
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const tel = n => 'tel:' + String(n).replace(/[^\d+]/g, '');
+
+  // Storage: only dates, a first name and checklist ticks. Everything works without it.
+  let storageOk = true;
+  try { localStorage.setItem('hb.probe', '1'); localStorage.removeItem('hb.probe'); } catch (e) { storageOk = false; }
+  function load(k, d) {
+    let raw;
+    try { raw = localStorage.getItem(k); } catch (e) { storageOk = false; return d; }
+    try { return raw ? JSON.parse(raw) : d; } catch (e) { return d; }
+  }
+  function save(k, v) {
+    try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { storageOk = false; }
+    showBanner();
+  }
+  const showBanner = () => { document.getElementById('banner-storage').hidden = storageOk; };
+  let profile = load('hb.profile', {});
+  let done = load('hb.checklist', {});
+
+  // Dates
+  const pad = n => String(n).padStart(2, '0');
+  const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+  const fmt = iso => { const [y, m, d] = iso.split('-').map(Number); return `${d}.${m}.${y}`; };
+  const utc = iso => new Date(iso + 'T00:00:00Z');
+  const fmtLong = iso => new Intl.DateTimeFormat('he-IL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(utc(iso));
+  const monthShort = iso => new Intl.DateTimeFormat('he-IL', { month: 'short', timeZone: 'UTC' }).format(utc(iso));
+  const days = n => (n === 1 ? 'יום אחד' : n === 2 ? 'יומיים' : `${n} ימים`);
+  const isOpen = (d, today) => d.end && d.date <= today && today <= d.end;
+  const target = (d, today) => (isOpen(d, today) ? d.end : d.date);
+  function rel(d, today) {
+    if (isOpen(d, today)) { const n = E.diffDays(today, d.end); return n === 0 ? 'נסגר היום' : `נסגר בעוד ${days(n)}`; }
+    const n = E.diffDays(today, d.date);
+    return n === 0 ? 'היום' : n === 1 ? 'מחר' : n > 1 ? `בעוד ${days(n)}` : 'עבר';
+  }
+  const when = d => (d.end ? `מ-${fmt(d.date)} עד ${fmt(d.end)}` : fmtLong(d.date));
+  const deadlinesNow = () => E.computeDeadlines(profile, C.rules);
+  const valid = k => (profile[k] && !E.checkProfile({ [k]: profile[k] }).length ? profile[k] : null);
+
+  // Shared pieces
+  const meBtn = () => `<a class="icon-btn" href="#me" aria-label="הפרטים שלי">${svg(I.me)}</a>`;
+  const header = (title, eyebrow) => `<header class="top"><div>${eyebrow ? `<p class="eyebrow">${eyebrow}</p>` : ''}<h1>${title}</h1></div>${meBtn()}</header>`;
+  const chip = t => (t && TAGS[t] ? ` <span class="chip ${t}">${TAGS[t]}</span>` : '');
+  const flags = d => (d.estimate ? '<p class="chip warn">הערכה לפי תאריך הכניסה. בדוק את התאריך בחותמת שבדרכון.</p>' : '')
+    + (d.warn ? '<p class="chip warn">שים לב: הטיסה שלך מוקדמת מהתאריך הזה.</p>' : '');
+  const invite = () => `<section class="card"><h2>בוא נחשב את המועדים שלך</h2><p>מלא ב"הפרטים שלי" את יום העבודה האחרון, את תאריך הטיסה ועוד כמה תאריכים, ונחשב לך את כל המועדים.</p><a class="btn" href="#me">למילוי הפרטים</a></section>`;
+  const miniRow = (d, today) => `<li><a href="#guide/${d.guide}"><span class="mini-date">${T(fmt(target(d, today)))}</span><span>${T(d.title)}</span><span class="rel">${rel(d, today)}</span></a></li>`;
+  function updateCard(text, title) {
+    const msg = `${text}\n\n(הדרך הביתה, גרסה ${C.meta.version})`;
+    return `<section class="card"><h2>${title}</h2><p class="muted small">נפתחת הודעת וואטסאפ מוכנה: "תעדכן ___". משלימים מה השתנה ובוחרים למי לשלוח.</p><a class="btn ghost block" href="${esc(E.waUrl(msg))}" target="_blank" rel="noopener">${svg(I.chat, 20)} בקש עדכון בוואטסאפ</a></section>`;
+  }
+  const sourcesList = list => `<ol class="sources">${list.map((s, n) => `<li id="src-${n}"><a href="${esc(s.url)}" target="_blank" rel="noopener">${T(s.title)}</a> <span class="muted small">נבדק ב-${T(fmt(s.checked))}</span></li>`).join('')}</ol>`;
+
+  function stageNow(today) {
+    const f = valid('flightHome'), l = valid('lastWorkDay');
+    return f && today > f ? 'israel' : l && today > l ? 'vacation' : 'before';
+  }
+
+  // Screens
+  function home() {
+    const today = todayISO(), ds = deadlinesNow(), next = E.upcoming(ds, today, 4), name = (profile.name || '').trim();
+    let html = header(name ? `שלום, ${esc(name)}` : 'שלום', 'הדרך הביתה');
+    const f = valid('flightHome');
+    if (f) {
+      const n = E.diffDays(today, f);
+      html += `<p class="lead">${n > 1 ? `עוד ${days(n)} לטיסה הביתה` : n === 1 ? 'מחר טסים הביתה' : n === 0 ? 'היום טסים הביתה. נסיעה טובה!' : 'ברוך שובך הביתה'}</p>`;
+    }
+    if (!ds.length) html += invite();
+    else if (!next.length) html += '<section class="card"><h2>אין מועדים קרובים</h2><p class="muted">כל המועדים שחישבנו כבר עברו. אפשר לעדכן תאריכים ב"הפרטים שלי".</p></section>';
+    else {
+      const d = next[0], n = E.diffDays(today, target(d, today));
+      html += `<section class="card hero"><p class="eyebrow">${isOpen(d, today) ? 'פתוח עכשיו' : 'המועד הבא'}</p>
+        <div class="count"><b>${n === 0 ? 'היום' : n}</b>${n === 0 ? '' : `<span>${n === 1 ? 'יום' : 'ימים'}${isOpen(d, today) ? ' עד שנסגר' : ''}</span>`}</div>
+        <h2>${T(d.title)}</h2><p class="muted">${T(fmtLong(target(d, today)))}</p>${flags(d)}
+        <a class="btn" href="#guide/${d.guide}">מה עושים</a></section>`;
+      if (next.length > 1) html += `<section class="card"><h2>אחר כך</h2><ul class="list mini">${next.slice(1).map(x => miniRow(x, today)).join('')}</ul><a class="small" href="#deadlines">כל המועדים</a></section>`;
+    }
+    const st = stageNow(today), sg = guides.filter(g => g.stage === st || (st === 'israel' && g.stage === 'after'));
+    if (sg.length) html += `<section class="card"><p class="eyebrow">השלב שלך</p><h2>${STAGES[st]}</h2><ul class="list links">${sg.map(g => `<li><a href="#guide/${g.id}">${T(g.title)}</a></li>`).join('')}</ul></section>`;
+    const total = C.checklist.length, ticked = C.checklist.filter(c => done[c.id]).length;
+    if (total) html += `<a class="card" href="#checklist"><div class="spread"><h2>צ׳קליסט</h2><span class="muted">${ticked} מתוך ${total}</span></div><div class="bar" role="progressbar" aria-label="התקדמות בצ׳קליסט" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${ticked}"><i style="width:${Math.round(100 * ticked / total)}%"></i></div></a>`;
+    html += updateCard('תעדכן ___', 'משהו השתנה או לא מסתדר?');
+    return html + '<p class="foot"><a href="#about">על האפליקציה</a> · <a href="#install">התקנה על האייפון</a></p>';
+  }
+
+  function deadlineCard(d, today) {
+    const past = (d.end || d.date) < today, t = target(d, today);
+    return `<li class="dl${past ? ' past' : ''}"><div class="dl-date" aria-hidden="true"><b>${Number(t.slice(8))}</b><span>${monthShort(t)}</span></div>
+      <div class="dl-body"><h3>${T(d.title)}</h3><p class="dl-when">${T(when(d))} · <span class="rel">${rel(d, today)}</span></p>${flags(d)}
+      <p>${T(d.detail)}</p><div class="row">${past ? '' : `<button class="btn small" data-ics="${d.id}">הוסף ליומן</button>`}<a class="small" href="#guide/${d.guide}">למדריך</a></div></div></li>`;
+  }
+  function deadlines() {
+    const today = todayISO(), ds = deadlinesNow();
+    let html = header('מועדים');
+    if (!ds.length) return html + invite();
+    const future = ds.filter(d => (d.end || d.date) >= today), past = ds.filter(d => (d.end || d.date) < today);
+    html += `<p class="muted">לפי התאריכים שמילאת. כל מועד אפשר להוסיף ליומן של האייפון, עם תזכורת ב-9:00 יום לפני.</p>
+      <div class="row"><button class="btn" data-action="ics-all"${future.length ? '' : ' disabled'}>הוסף הכול ליומן</button><button class="btn ghost" data-action="copy">העתק את המועדים</button><button class="btn ghost" data-action="print">שמור כ-PDF</button></div>`;
+    html += future.length ? `<ul class="list card">${future.map(d => deadlineCard(d, today)).join('')}</ul>` : '<section class="card"><p>אין מועדים קרובים.</p></section>';
+    if (past.length) html += `<details class="card"><summary>מועדים שעברו (${past.length})</summary><ul class="list">${past.map(d => deadlineCard(d, today)).join('')}</ul></details>`;
+    return html;
+  }
+
+  function guideList() {
+    let html = header('מדריכים') + `<p class="muted">${guides.length} מדריכים, לפי הסדר שבו תצטרך אותם.</p>`;
+    for (const st of Object.keys(STAGES)) {
+      const gs = guides.filter(g => g.stage === st);
+      if (gs.length) html += `<h2 class="stage">${STAGES[st]}</h2><ul class="list card links-card">${gs.map(g => `<li><a class="glink" href="#guide/${g.id}"><span class="num">${g.order}</span><span class="gtext"><b>${T(g.title)}</b><small>${T(g.summary)}</small></span>${svg(I.chev, 20)}</a></li>`).join('')}</ul>`;
+    }
+    return html;
+  }
+
+  const item = (it, g) => `<li>${T(it.t)}${chip(it.tag)}${Number.isInteger(it.s) && g.sources[it.s] ? ` <button class="src" data-src="${it.s}" aria-label="מקור ${it.s + 1}">[${it.s + 1}]</button>` : ''}</li>`;
+  function guidePage(id) {
+    const g = guideById[id], back = `<a class="back" href="#guides">${svg(I.back, 18)} כל המדריכים</a>`;
+    if (!g) return `${back}<h1>המדריך לא נמצא</h1><p class="muted">אולי הוא עוד לא נכתב בגרסה הזו.</p>`;
+    const today = todayISO(), mine = deadlinesNow().filter(d => d.guide === id), next = guides[guides.indexOf(g) + 1];
+    let html = `${back}<p class="eyebrow">${STAGES[g.stage]} · מדריך ${g.order} מתוך ${guides.length}</p><h1>${T(g.title)}</h1>
+      <section class="summary"><h2 class="kicker">בקצרה</h2><p>${T(g.summary)}</p></section>`;
+    if (mine.length) html += `<section class="card"><h2>המועדים שלך</h2><ul class="list mini">${mine.map(d => miniRow(d, today)).join('')}</ul></section>`;
+    for (const [kind, label] of KINDS) {
+      const sec = g.sections.find(s => s.kind === kind);
+      if (!sec || !sec.items.length) continue;
+      const tag = kind === 'steps' ? 'ol' : 'ul';
+      html += `<section class="sec ${kind}"><h2>${label}</h2><${tag} class="items">${sec.items.map(it => item(it, g)).join('')}</${tag}></section>`;
+    }
+    html += `<section class="sec"><h2>מקור רשמי ותאריך בדיקה</h2>${sourcesList(g.sources)}</section>`;
+    html += updateCard(`תעדכן במדריך "${g.title}": ___`, 'משהו כאן לא מדויק?');
+    if (next) html += `<a class="card next" href="#guide/${next.id}"><span class="muted small">המדריך הבא</span><b>${T(next.title)}</b></a>`;
+    return html;
+  }
+
+  function checklist() {
+    const total = C.checklist.length, ticked = C.checklist.filter(c => done[c.id]).length;
+    let html = header('צ׳קליסט') + `<p class="muted" id="progress-text">${ticked} מתוך ${total} סומנו. הסימונים נשמרים בטלפון.</p><div class="bar"><i id="progress-bar" style="width:${total ? Math.round(100 * ticked / total) : 0}%"></i></div>`;
+    for (const st of Object.keys(STAGES)) {
+      const items = C.checklist.filter(c => c.stage === st);
+      if (items.length) html += `<h2 class="stage">${STAGES[st]}</h2><ul class="list card">${items.map(c => `<li class="check-row"><label class="check"><input type="checkbox" data-check="${esc(c.id)}"${done[c.id] ? ' checked' : ''}><span>${T(c.text)}</span></label>${guideById[c.guide] ? `<a class="link" href="#guide/${c.guide}">${T(guideById[c.guide].title)}</a>` : ''}</li>`).join('')}</ul>`;
+    }
+    return html;
+  }
+
+  function emergency() {
+    const em = C.emergency;
+    let html = header('חירום') + '<p class="muted">הקשה על מספר מחייגת אליו.</p>';
+    html += em.numbers.map(n => `<a class="call" href="${tel(n.number)}"><span class="call-text"><b>${T(n.label)}</b>${n.note ? `<small>${T(n.note)}</small>` : ''}${chip(n.tag) ? `<span>${chip(n.tag)}</span>` : ''}</span><bdi dir="ltr" class="call-num">${esc(n.number)}</bdi></a>`).join('');
+    const eg = guideById.emergency;
+    html += `<a class="card next" href="#guide/emergency"><span class="muted small">מה עושים במצב חירום, צעד אחר צעד</span><b>${T(eg ? eg.title : 'כרטיס חירום')}</b></a>`;
+    if (em.places.length) html += '<h2 class="stage">מקומות</h2>' + em.places.map(p => `<section class="card place"><h3>${T(p.name_he)}${chip(p.tag)}</h3>
+      ${p.name_th ? `<p lang="th" dir="ltr" class="th">${esc(p.name_th)}</p>` : ''}${p.address_en ? `<p lang="en" dir="ltr" class="addr">${esc(p.address_en)}</p>` : ''}${p.address_th ? `<p lang="th" dir="ltr" class="th">${esc(p.address_th)}</p>` : ''}
+      <div class="row">${p.phone ? `<a class="btn small" href="${tel(p.phone)}">${svg(I.phone, 18)} <bdi dir="ltr">${esc(p.phone)}</bdi></a>` : ''}${p.maps ? `<a class="btn small ghost" href="${esc(p.maps)}" target="_blank" rel="noopener">${svg(I.pin, 18)} פתח במפות</a>` : ''}</div></section>`).join('');
+    html += '<button class="btn ghost block" data-action="print">שמור כ-PDF: חירום ומועדים</button>';
+    return html + `<h2 class="stage">מקורות</h2><section class="card">${sourcesList(em.sources)}</section>`;
+  }
+
+  function dateField(k) {
+    const [label, help] = FIELD[k], v = profile[k] || '', w = v ? E.checkProfile({ [k]: v }) : [];
+    return `<div class="field"><label for="f-${k}">${label}</label>${help ? `<p class="help">${T(help)}</p>` : ''}
+      <div class="date-row"><input id="f-${k}" type="date" data-field="${k}" value="${esc(v)}">${v ? `<button class="btn small ghost" data-clear="${k}" aria-label="מחק: ${label}">מחק</button>` : ''}</div>
+      <p class="warnmsg" id="w-${k}" role="alert">${w.map(esc).join(' ')}</p></div>`;
+  }
+  function routeField() {
+    const r = C.rules, opt = (val, title, sub) => `<label><input type="radio" name="route" value="${val}"${(profile.route || '') === val ? ' checked' : ''}><span><b>${title}</b>${sub ? `<small>${T(sub)}</small>` : ''}</span></label>`;
+    return `<fieldset class="field seg"><legend>איך תישאר בחופשה</legend><p class="help">משפיע על חישוב סוף השהייה. <a href="#guide/stay-legal">מה ההבדל?</a></p>
+      ${opt('A', 'דרך א', `פטור מוויזה ל-${r.EXEMPT_DAYS} יום, ואחריו הארכה של עד ${r.EXTENSION_DAYS} יום`)}
+      ${opt('B', 'דרך ב', `ויזת תייר (TR) ל-${r.TR_DAYS} יום, ואחריה הארכה של עד ${r.TR_EXTENSION_DAYS} יום`)}
+      ${opt('', 'עוד לא החלטתי', '')}</fieldset>`;
+  }
+  function me() {
+    return header('הפרטים שלי') + '<p class="muted">נשמרים רק בטלפון שלך ולא נשלחים לשום מקום. הכול רשות: מה שתמלא, נחשב.</p>'
+      + `<section class="card"><div class="field"><label for="f-name">שם פרטי</label><p class="help">בשביל הברכה במסך הבית.</p><input id="f-name" type="text" autocomplete="given-name" maxlength="40" value="${esc(profile.name || '')}"></div></section>`
+      + `<p class="note">${svg(I.info, 18)}<span>בתאילנד כותבים לפעמים את השנה בספירה הבודהיסטית (${T('2569 = 2026')}). כאן ממלאים את השנה הרגילה.</span></p>`
+      + `<section class="card">${ORDER.map(k => (k === 'route' ? routeField() : dateField(k))).join('')}</section>`
+      + '<button class="btn ghost block" data-action="wipe">מחק את כל הפרטים והסימונים</button>'
+      + '<p class="foot"><a href="#about">על האפליקציה</a> · <a href="#install">התקנה על האייפון</a></p>';
+  }
+
+  function about() {
+    const rs = C.rules.sources || {};
+    let html = header('על האפליקציה')
+      + '<p>הדרך הביתה מלווה אותך מסיום העבודה בבנגקוק, דרך החופשה ועד החזרה לישראל: מועדים, מדריכים צעד אחר צעד וצ׳קליסט.</p>'
+      + `<p class="muted">גרסה ${T(C.meta.version)} · התוכן נבדק מול מקורות רשמיים ב-${T(fmt(C.meta.verifiedAt))}</p>`
+      + '<section class="card"><h2>זה לא ייעוץ משפטי</h2><p>הכללים בתאילנד משתנים לעתים קרובות, ולכן ליד כל עובדה יש מקור ותאריך בדיקה. בנושאי מס וביטוח לאומי בישראל האפליקציה מסבירה ומכינה שאלות, ולא מכריעה: את ההחלטה מקבל יועץ מס.</p>'
+      + `<p class="small">ליד חלק מהעובדות יש תגית:${chip('unverified')} אין מקור רשמי שמאשר, או שמקורות רשמיים סותרים.${chip('discretion')} ההחלטה בידי הפקיד.${chip('varies')} הנוהל שונה ממשרד למשרד.</p></section>`
+      + '<section class="card"><h2>פרטיות</h2><p>בלי אנליטיקס ובלי פרסומות. הפרטים שלך נשמרים רק בטלפון. האפליקציה לא שולחת שום דבר לשרתים אחרים, וקישורים לאתרים רשמיים נפתחים רק כשאתה מקיש עליהם.</p></section>'
+      + '<section class="card"><h2>השיטה</h2><p>מבנה המדריכים (בקצרה, צעד אחר צעד, מלכודות, מקור ותאריך בדיקה) בהשראת כל זכות, kolzchut.org.il. אין קשר רשמי.</p></section>'
+      + '<h2 class="stage">מקורות</h2>';
+    html += guides.map(g => `<details class="card"><summary>${T(g.title)}</summary>${sourcesList(g.sources)}</details>`).join('');
+    const keys = Object.keys(rs);
+    if (keys.length) html += `<details class="card"><summary>המספרים שמאחורי המועדים</summary><ul class="sources">${keys.map(k => `<li>${T(rs[k].note || k)}${chip(rs[k].tag)} <a href="${esc(rs[k].url)}" target="_blank" rel="noopener">מקור</a> <span class="muted small">נבדק ב-${T(fmt(rs[k].checked))}</span></li>`).join('')}</ul></details>`;
+    return html;
+  }
+
+  function install() {
+    return '<header class="top"><div><p class="eyebrow">הדרך הביתה</p><h1>התקנה על האייפון</h1></div></header>'
+      + '<p>כך האפליקציה נפתחת מאייקון במסך הבית, ועובדת גם בלי אינטרנט.</p>'
+      + `<section class="card"><ol class="items steps-install"><li>פתח את הקישור ב-Safari.</li><li>הקש על כפתור השיתוף <span class="inline-icon">${svg(I.share, 22)}</span>.</li><li>בחר "הוספה למסך הבית". אם לא רואים, גלול למטה ברשימה.</li><li>הקש "הוסף".</li><li>פתח את האפליקציה מהאייקון בפעם הראשונה כשיש אינטרנט. מאז היא עובדת גם בלי.</li></ol></section>`
+      + `<p class="note">${svg(I.info, 18)}<span>את הפרטים שלך מלא באפליקציה שנפתחת מהאייקון. ל-Safari ולאייקון יש אחסון נפרד, ומה שתמלא ב-Safari לא יעבור לאייקון.</span></p>`
+      + '<button class="btn block" data-action="install-done">המשך לאפליקציה</button>';
+  }
+
+  // Router
+  const SCREENS = { home, deadlines, guides: guideList, guide: guidePage, checklist, emergency, me, about, install };
+  function render(keepScroll) {
+    const [name, arg] = (location.hash.slice(1) || 'home').split('/');
+    const y = window.scrollY;
+    view.innerHTML = (SCREENS[name] || home)(arg);
+    const tab = name === 'guide' ? 'guides' : name;
+    document.querySelectorAll('.tabs a').forEach(a => a.setAttribute('aria-current', a.dataset.tab === tab ? 'page' : 'false'));
+    if (keepScroll) { window.scrollTo(0, y); return; }
+    window.scrollTo(0, 0);
+    const h1 = view.querySelector('h1');
+    if (h1) { h1.tabIndex = -1; h1.focus({ preventScroll: true }); }
+  }
+
+  // Actions
+  let toastTimer;
+  function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg; el.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+  }
+  function downloadICS(ds, file) {
+    const stamp = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z';
+    const url = URL.createObjectURL(new Blob([E.toICS(ds, stamp)], { type: 'text/calendar;charset=utf-8' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = file; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    toast('אם היומן לא נפתח, השתמש ב"העתק את המועדים".');
+  }
+  function copyDeadlines() {
+    const today = todayISO();
+    const text = deadlinesNow().filter(d => (d.end || d.date) >= today)
+      .map(d => `${d.end ? `${fmt(d.date)}–${fmt(d.end)}` : fmt(d.date)}  ${d.title}`).join('\n');
+    const fallback = () => {
+      const ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      let ok = false; try { ok = document.execCommand('copy'); } catch (e) { /* no clipboard */ }
+      ta.remove(); toast(ok ? 'המועדים הועתקו' : 'לא הצלחתי להעתיק');
+    };
+    if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => toast('המועדים הועתקו. אפשר להדביק בפתקים.'), fallback);
+    else fallback();
+  }
+  function printSheet() {
+    const today = todayISO(), ds = deadlinesNow().filter(d => (d.end || d.date) >= today), em = C.emergency;
+    document.getElementById('print').innerHTML = `<h1>הדרך הביתה: חירום ומועדים</h1><p>הודפס ב-${T(fmt(today))}</p>
+      <h2>מספרי חירום</h2><table>${em.numbers.map(n => `<tr><td>${T(n.label)}</td><td><bdi dir="ltr">${esc(n.number)}</bdi></td></tr>`).join('')}</table>
+      ${em.places.map(p => `<p><b>${T(p.name_he)}</b><br>${p.address_en ? `<span dir="ltr">${esc(p.address_en)}</span><br>` : ''}${p.phone ? `<bdi dir="ltr">${esc(p.phone)}</bdi>` : ''}</p>`).join('')}
+      <h2>המועדים שלי</h2>${ds.length ? `<table>${ds.map(d => `<tr><td>${T(d.end ? `${fmt(d.date)}–${fmt(d.end)}` : fmt(d.date))}</td><td>${T(d.title)}</td></tr>`).join('')}</table>` : '<p>אין מועדים קרובים.</p>'}`;
+    window.print();
+  }
+  function setField(k, v) {
+    if (v) profile[k] = v; else delete profile[k];
+    save('hb.profile', profile);
+    toast(storageOk ? 'נשמר' : 'לא נשמר');
+  }
+
+  document.addEventListener('click', e => {
+    const el = e.target.closest('[data-action],[data-ics],[data-src],[data-clear]');
+    if (!el) return;
+    const a = el.dataset.action;
+    if (el.dataset.ics) { const d = deadlinesNow().find(x => x.id === el.dataset.ics); if (d) downloadICS([d], `${d.id}.ics`); }
+    else if (el.dataset.src) { const li = document.getElementById('src-' + el.dataset.src); if (li) { li.scrollIntoView({ behavior: 'smooth', block: 'center' }); li.classList.add('flash'); setTimeout(() => li.classList.remove('flash'), 1600); } }
+    else if (el.dataset.clear) { setField(el.dataset.clear, ''); render(true); }
+    else if (a === 'ics-all') { const today = todayISO(); downloadICS(deadlinesNow().filter(d => (d.end || d.date) >= today), 'haderech-habayta.ics'); }
+    else if (a === 'copy') copyDeadlines();
+    else if (a === 'print') printSheet();
+    else if (a === 'install-done') { save('hb.installSeen', true); location.hash = '#home'; }
+    else if (a === 'wipe' && confirm('למחוק מהטלפון את כל הפרטים והסימונים?')) { profile = {}; done = {}; save('hb.profile', profile); save('hb.checklist', done); render(); toast('נמחק'); }
+  });
+  document.addEventListener('change', e => {
+    const el = e.target;
+    if (el.dataset.field) { setField(el.dataset.field, el.value); render(true); }
+    else if (el.name === 'route') { setField('route', el.value); }
+    else if (el.dataset.check) {
+      if (el.checked) done[el.dataset.check] = true; else delete done[el.dataset.check];
+      save('hb.checklist', done);
+      const total = C.checklist.length, ticked = C.checklist.filter(c => done[c.id]).length;
+      document.getElementById('progress-text').textContent = `${ticked} מתוך ${total} סומנו. הסימונים נשמרים בטלפון.`;
+      document.getElementById('progress-bar').style.width = `${Math.round(100 * ticked / total)}%`;
+    }
+  });
+  document.addEventListener('input', e => {
+    if (e.target.id !== 'f-name') return;
+    const v = e.target.value.trim();
+    if (v) profile.name = v; else delete profile.name;
+    save('hb.profile', profile);
+  });
+  window.addEventListener('hashchange', () => render());
+
+  const standalone = navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+  if (!standalone && !location.hash && !load('hb.installSeen', false)) location.replace('#install');
+  showBanner();
+  render();
+})();
+</script>
+</body>
+</html>
