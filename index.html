@@ -288,6 +288,7 @@ input[type=date]::-webkit-date-and-time-value { text-align: right; }
   function rel(d, today) {
     if (isOpen(d, today)) { const n = E.diffDays(today, d.end); return n === 0 ? 'נסגר היום' : `נסגר בעוד ${days(n)}`; }
     const n = E.diffDays(today, d.date);
+    if (d.end && n > 0) return n === 1 ? 'נפתח מחר' : `נפתח בעוד ${days(n)}`; // a window that has not opened yet
     return n === 0 ? 'היום' : n === 1 ? 'מחר' : n > 1 ? `בעוד ${days(n)}` : 'עבר';
   }
   const when = d => (d.end ? `מ-${fmt(d.date)} עד ${fmt(d.end)}` : fmtLong(d.date));
@@ -326,8 +327,9 @@ input[type=date]::-webkit-date-and-time-value { text-align: right; }
     else if (!next.length) html += '<section class="card"><h2>אין מועדים קרובים</h2><p class="muted">כל המועדים שחישבנו כבר עברו. אפשר לעדכן תאריכים ב"הפרטים שלי".</p></section>';
     else {
       const d = next[0], n = E.diffDays(today, target(d, today));
-      html += `<section class="card hero"><p class="eyebrow">${isOpen(d, today) ? 'פתוח עכשיו' : 'המועד הבא'}</p>
-        <div class="count"><b>${n === 0 ? 'היום' : n}</b>${n === 0 ? '' : `<span>${n === 1 ? 'יום' : 'ימים'}${isOpen(d, today) ? ' עד שנסגר' : ''}</span>`}</div>
+      const open = isOpen(d, today), opens = d.end && !open;
+      html += `<section class="card hero"><p class="eyebrow">${open ? 'פתוח עכשיו' : opens ? 'נפתח בקרוב' : 'המועד הבא'}</p>
+        <div class="count"><b>${n === 0 ? 'היום' : n}</b>${n === 0 ? '' : `<span>${n === 1 ? 'יום' : 'ימים'}${open ? ' עד שנסגר' : opens ? ' עד שנפתח' : ''}</span>`}</div>
         <h2>${T(d.title)}${chip(d.tag)}</h2><p class="muted">${T(fmtLong(target(d, today)))}</p>${flags(d)}
         <a class="btn" href="#guide/${d.guide}">מה עושים</a></section>`;
       if (next.length > 1) html += `<section class="card"><h2>אחר כך</h2><ul class="list mini">${next.slice(1).map(x => miniRow(x, today)).join('')}</ul><a class="small" href="#deadlines">כל המועדים</a></section>`;
@@ -350,7 +352,7 @@ input[type=date]::-webkit-date-and-time-value { text-align: right; }
     const today = todayISO(), ds = deadlinesNow();
     let html = header('מועדים');
     if (!ds.length) return html + invite();
-    const future = ds.filter(d => (d.end || d.date) >= today), past = ds.filter(d => (d.end || d.date) < today);
+    const future = E.upcoming(ds, today, Infinity), past = ds.filter(d => (d.end || d.date) < today);
     html += `<p class="muted">לפי התאריכים שמילאת. כל מועד אפשר להוסיף ליומן של האייפון, עם תזכורת ב-9:00 יום לפני.</p>
       <div class="row"><button class="btn" data-action="ics-all"${future.length ? '' : ' disabled'}>הוסף הכול ליומן</button><button class="btn ghost" data-action="copy">העתק את המועדים</button><button class="btn ghost" data-action="print">שמור כ-PDF</button></div>`;
     html += future.length ? `<ul class="list card">${future.map(d => deadlineCard(d, today)).join('')}</ul>` : '<section class="card"><p>אין מועדים קרובים.</p></section>';
@@ -413,7 +415,7 @@ input[type=date]::-webkit-date-and-time-value { text-align: right; }
   function dateField(k) {
     const [label, help] = FIELD[k], v = profile[k] || '', w = v ? E.checkProfile({ [k]: v }) : [];
     return `<div class="field"><label for="f-${k}">${label}</label>${help ? `<p class="help">${T(help)}</p>` : ''}
-      <div class="date-row"><input id="f-${k}" type="date" data-field="${k}" value="${esc(v)}">${v ? `<button class="btn small ghost" data-clear="${k}" aria-label="מחק: ${label}">מחק</button>` : ''}</div>
+      <div class="date-row"><input id="f-${k}" type="date" data-field="${k}" value="${esc(v)}"><button class="btn small ghost" data-clear="${k}" aria-label="מחק: ${label}"${v ? '' : ' hidden'}>מחק</button></div>
       <p class="warnmsg" id="w-${k}" role="alert">${w.map(esc).join(' ')}</p></div>`;
   }
   function routeField() {
@@ -458,9 +460,11 @@ input[type=date]::-webkit-date-and-time-value { text-align: right; }
 
   // Router
   const SCREENS = { home, deadlines, guides: guideList, guide: guidePage, checklist, emergency, me, about, install };
+  let renderedDay;
   function render(keepScroll) {
     const [name, arg] = (location.hash.slice(1) || 'home').split('/');
     const y = window.scrollY;
+    renderedDay = todayISO();
     view.innerHTML = (SCREENS[name] || home)(arg);
     const tab = name === 'guide' ? 'guides' : name;
     document.querySelectorAll('.tabs a').forEach(a => a.setAttribute('aria-current', a.dataset.tab === tab ? 'page' : 'false'));
@@ -488,7 +492,7 @@ input[type=date]::-webkit-date-and-time-value { text-align: right; }
   function copyDeadlines() {
     const today = todayISO();
     const text = deadlinesNow().filter(d => (d.end || d.date) >= today)
-      .map(d => `${d.end ? `${fmt(d.date)}–${fmt(d.end)}` : fmt(d.date)}  ${d.title}`).join('\n');
+      .map(d => `${d.end ? `מ-${fmt(d.date)} עד ${fmt(d.end)}` : fmt(d.date)}: ${d.title}`).join('\n');
     const fallback = () => {
       const ta = document.createElement('textarea');
       ta.value = text; document.body.appendChild(ta); ta.select();
@@ -503,13 +507,20 @@ input[type=date]::-webkit-date-and-time-value { text-align: right; }
     document.getElementById('print').innerHTML = `<h1>הדרך הביתה: חירום ומועדים</h1><p>הודפס ב-${T(fmt(today))}</p>
       <h2>מספרי חירום</h2><table>${em.numbers.map(n => `<tr><td>${T(n.label)}</td><td><bdi dir="ltr">${esc(n.number)}</bdi></td></tr>`).join('')}</table>
       ${em.places.map(p => `<p><b>${T(p.name_he)}</b><br>${p.address_en ? `<span dir="ltr">${esc(p.address_en)}</span><br>` : ''}${p.phone ? `<bdi dir="ltr">${esc(p.phone)}</bdi>` : ''}</p>`).join('')}
-      <h2>המועדים שלי</h2>${ds.length ? `<table>${ds.map(d => `<tr><td>${T(d.end ? `${fmt(d.date)}–${fmt(d.end)}` : fmt(d.date))}</td><td>${T(d.title)}</td></tr>`).join('')}</table>` : '<p>אין מועדים קרובים.</p>'}`;
+      <h2>המועדים שלי</h2>${ds.length ? `<table>${ds.map(d => `<tr><td>${T(d.end ? `מ-${fmt(d.date)} עד ${fmt(d.end)}` : fmt(d.date))}</td><td>${T(d.title)}</td></tr>`).join('')}</table>` : '<p>אין מועדים קרובים.</p>'}`;
     window.print();
   }
   function setField(k, v) {
     if (v) profile[k] = v; else delete profile[k];
     save('hb.profile', profile);
     toast(storageOk ? 'נשמר' : 'לא נשמר');
+  }
+  // Updates a date field's warning and clear button in place: rebuilding the screen
+  // would close the iPhone date picker on every wheel turn.
+  function showField(k) {
+    const v = profile[k] || '', w = document.getElementById('w-' + k), c = document.querySelector(`[data-clear="${k}"]`);
+    if (w) w.textContent = v ? E.checkProfile({ [k]: v }).join(' ') : '';
+    if (c) c.hidden = !v;
   }
 
   document.addEventListener('click', e => {
@@ -518,7 +529,11 @@ input[type=date]::-webkit-date-and-time-value { text-align: right; }
     const a = el.dataset.action;
     if (el.dataset.ics) { const d = deadlinesNow().find(x => x.id === el.dataset.ics); if (d) downloadICS([d], `${d.id}.ics`); }
     else if (el.dataset.src) { const li = document.getElementById('src-' + el.dataset.src); if (li) { li.scrollIntoView({ behavior: 'smooth', block: 'center' }); li.classList.add('flash'); setTimeout(() => li.classList.remove('flash'), 1600); } }
-    else if (el.dataset.clear) { setField(el.dataset.clear, ''); render(true); }
+    else if (el.dataset.clear) {
+      const k = el.dataset.clear, input = document.getElementById('f-' + k);
+      if (input) input.value = '';
+      setField(k, ''); showField(k);
+    }
     else if (a === 'ics-all') { const today = todayISO(); downloadICS(deadlinesNow().filter(d => (d.end || d.date) >= today), 'haderech-habayta.ics'); }
     else if (a === 'copy') copyDeadlines();
     else if (a === 'print') printSheet();
@@ -527,7 +542,7 @@ input[type=date]::-webkit-date-and-time-value { text-align: right; }
   });
   document.addEventListener('change', e => {
     const el = e.target;
-    if (el.dataset.field) { setField(el.dataset.field, el.value); render(true); }
+    if (el.dataset.field) { setField(el.dataset.field, el.value); showField(el.dataset.field); }
     else if (el.name === 'route') { setField('route', el.value); }
     else if (el.dataset.check) {
       if (el.checked) done[el.dataset.check] = true; else delete done[el.dataset.check];
@@ -546,7 +561,14 @@ input[type=date]::-webkit-date-and-time-value { text-align: right; }
   window.addEventListener('hashchange', () => render());
 
   const standalone = navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
-  if (!standalone && !location.hash && !load('hb.installSeen', false)) location.replace('#install');
+  // Added to the home screen from the install screen, the icon may keep "#install" in its saved address.
+  if (standalone && location.hash === '#install') location.replace('#home');
+  else if (!standalone && !location.hash && !load('hb.installSeen', false)) location.replace('#install');
+  // A home-screen app can sleep for days: on wake, recount from the new "today" unless he is typing.
+  document.addEventListener('visibilitychange', () => {
+    const typing = document.activeElement && document.activeElement.tagName === 'INPUT';
+    if (document.visibilityState === 'visible' && todayISO() !== renderedDay && !typing) render(true);
+  });
   showBanner();
   render();
 

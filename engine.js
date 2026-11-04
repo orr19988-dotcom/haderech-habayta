@@ -72,15 +72,18 @@
 
     const route = p.route === 'A' || p.route === 'B' ? p.route : null;
     const stamp = val('stampUntil'), entry = val('touristEntry');
-    if (route && (stamp || entry)) {
-      const a = route === 'A', ext = a ? r.EXTENSION_DAYS : r.TR_EXTENSION_DAYS;
+    if (stamp || (route && entry)) { // the stamp date stands alone; only the extension length needs the route
+      const a = route === 'A';
       const stayKeys = stamp ? [] : [a ? 'EXEMPT_DAYS' : 'TR_DAYS'];
       const by = stamp || addDays(entry, (a ? r.EXEMPT_DAYS : r.TR_DAYS) - 1); // the entry day is day 1
       const extra = stamp ? {} : { estimate: true };
       add('stay-extend-by', by, 'stay-legal', stayKeys, 'המועד האחרון להגשת הארכה',
         'עד התאריך שבחותמת הכניסה: הגש בקשת הארכה (TM.7) בלשכת ההגירה. האישור לשיקול דעת הפקיד.', extra);
-      add('stay-end', addDays(by, ext), 'stay-legal', [...stayKeys, a ? 'EXTENSION_DAYS' : 'TR_EXTENSION_DAYS'], 'סוף השהייה, אם ההארכה אושרה',
-        `ההארכה מוסיפה עד ${ext} יום. אחרי התאריך הזה כל יום נוסף הוא שהייה לא חוקית, עם קנס.`, extra);
+      if (route) {
+        const ext = a ? r.EXTENSION_DAYS : r.TR_EXTENSION_DAYS;
+        add('stay-end', addDays(by, ext), 'stay-legal', [...stayKeys, a ? 'EXTENSION_DAYS' : 'TR_EXTENSION_DAYS'], 'סוף השהייה, אם ההארכה אושרה',
+          `ההארכה מוסיפה עד ${ext} יום. אחרי התאריך הזה כל יום נוסף הוא שהייה לא חוקית, עם קנס.`, extra);
+      }
     }
 
     const moveOut = val('moveOut');
@@ -118,7 +121,14 @@
     return out.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.id < b.id ? -1 : 1));
   }
 
-  function upcoming(ds, today, n = 3) { return ds.filter(d => (d.end || d.date) >= today).slice(0, n); }
+  // A window that is already open ranks by its closing day: what matters now is when it shuts.
+  const rankDate = (d, today) => (d.end && d.date < today ? d.end : d.date);
+  function upcoming(ds, today, n = 3) {
+    return ds.filter(d => (d.end || d.date) >= today).sort((a, b) => {
+      const x = rankDate(a, today), y = rankDate(b, today);
+      return x < y ? -1 : x > y ? 1 : a.id < b.id ? -1 : 1;
+    }).slice(0, n);
+  }
 
   // RFC 5545. All-day events have no time zone: the date is the same day in Bangkok and in Israel.
   // The alarm rings at 09:00 the day before (-PT15H from midnight), like the iPhone's own all-day alert.
