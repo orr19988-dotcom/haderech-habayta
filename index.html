@@ -230,7 +230,7 @@ input[type=date]::-webkit-date-and-time-value { text-align: right; }
   const TAGS = { unverified: 'לא אומת', discretion: 'שיקול דעת של הפקיד', varies: 'משתנה בין משרדים' };
   const FIELD = {
     lastWorkDay: ['יום העבודה האחרון', 'ממנו מחושבים היום האחרון של ההיתר, השכר האחרון וה-50 Tawi.'],
-    last90: ['דיווח 90 היום האחרון שלך', 'התאריך שבו הגשת אותו. אם עוד לא הגשת, תאריך הכניסה האחרונה לתאילנד.'],
+    next90: ['מועד דיווח 90 היום הבא', 'התאריך שמודפס על הקבלה של הדיווח האחרון. אין לך את הקבלה? המועד הקודם ועוד 90 יום.'],
     moveOut: ['היציאה מהדירה', 'היום שבו אתה מחזיר את המפתחות.'],
     touristEntry: ['הכניסה לתאילנד כתייר', 'אחרי שהעבודה נגמרת.'],
     stampUntil: ['התאריך שבחותמת הכניסה', 'עד מתי מותר לך לשהות לפי החותמת בדרכון. אם יש, הוא מדויק יותר מהחישוב.'],
@@ -238,7 +238,7 @@ input[type=date]::-webkit-date-and-time-value { text-align: right; }
     leftIsraelOn: ['היום שבו עזבת את ישראל', 'בשביל הטבות המכס של תושב חוזר. אם ביקרת בארץ מאז, קרא את המדריך על המכס.'],
     birthDate: ['תאריך לידה (רשות)', 'רק בשביל חלון התביעה של כספי ה-SSO.'],
   };
-  const ORDER = ['lastWorkDay', 'last90', 'moveOut', 'route', 'touristEntry', 'stampUntil', 'flightHome', 'leftIsraelOn', 'birthDate'];
+  const ORDER = ['lastWorkDay', 'next90', 'moveOut', 'route', 'touristEntry', 'stampUntil', 'flightHome', 'leftIsraelOn', 'birthDate'];
   const I = {
     me: '<circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c1.4-3.8 4.2-5.6 7.5-5.6s6.1 1.8 7.5 5.6"/>',
     back: '<path d="m9 5 7 7-7 7"/>',

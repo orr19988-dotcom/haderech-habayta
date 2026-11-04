@@ -9,7 +9,7 @@
 
   const DAY = 864e5;
   const ISO = /^(\d{4})-(\d{2})-(\d{2})$/;
-  const DATE_FIELDS = ['lastWorkDay', 'leftIsraelOn', 'last90', 'touristEntry', 'stampUntil', 'moveOut', 'flightHome', 'birthDate'];
+  const DATE_FIELDS = ['lastWorkDay', 'leftIsraelOn', 'next90', 'touristEntry', 'stampUntil', 'moveOut', 'flightHome', 'birthDate'];
 
   const toUTC = iso => { const [y, m, d] = iso.split('-').map(Number); return Date.UTC(y, m - 1, d); };
   const fromUTC = t => new Date(t).toISOString().slice(0, 10);
@@ -47,27 +47,28 @@
 
     const last = val('lastWorkDay');
     if (last) {
-      add('immigration-last-day', last, 'last-day', [], 'היום האחרון בעבודה: ההיתר נגמר',
-        'היתר העבודה וההארכה שקיבלת בזכות העבודה נגמרים היום, לא בתאריך שבחותמת. תכנן מראש: לצאת מתאילנד, או להגיע בבוקר ללשכת ההגירה עם מכתב מהמעסיק. ימים נוספים לעזיבה הם לשיקול דעת הפקיד, לא זכות.');
-      add('final-wages', addDays(last, r.FINAL_WAGES_DAYS), 'job-end', ['FINAL_WAGES_DAYS'], 'השכר האחרון',
-        `אם המעסיק הוא שסיים את העבודה, הוא משלם את כל מה שמגיע לך תוך ${r.FINAL_WAGES_DAYS} ימים. אם התפטרת, השכר משולם ביום התשלום הרגיל.`);
+      add('immigration-last-day', last, 'last-day', [], 'היום האחרון בעבודה: ההיתר לשהות נגמר',
+        'ההיתר לשהות שקיבלת בזכות העבודה נגמר היום, גם אם בחותמת ההארכה כתוב תאריך מאוחר יותר. הגע בבוקר, בעצמך ועם הדרכון, למשרד ההגירה שבו קיבלת את ההארכה, עם המכתב והמסמכים מהמעסיק. תכנן לצאת מתאילנד באותו ערב: ימים נוספים לעזיבה אינם זכות, והם בידי הפקיד.');
+      add('final-wages', addDays(last, r.FINAL_WAGES_DAYS), 'job-end', ['FINAL_WAGES_DAYS'], 'השכר האחרון, אם המעסיק סיים את העבודה',
+        `כשהמעסיק מסיים את העבודה, הוא חייב לשלם את השכר האחרון תוך ${r.FINAL_WAGES_DAYS} ימים. בחוזה קצוב שלא חודש לא ברור אם הכלל חל: סכם בכתב מתי יגיע כל תשלום. אם התפטרת, השכר מגיע ביום התשלום הרגיל, אז אל תסגור את חשבון הבנק לפני שהוא נכנס.`);
       add('doe-report', addDays(last, r.DOE_REPORT_DAYS), 'last-day', ['DOE_REPORT_DAYS'], 'המעסיק מדווח על סיום ההעסקה',
-        `המעסיק צריך לדווח למשרד התעסוקה (DOE) שעזבת, תוך ${r.DOE_REPORT_DAYS} יום. בקש ממנו אישור שדיווח.`);
-      add('fifty-tawi', addDays(last, r.FIFTY_TAWI_DAYS), 'thai-tax-sso', ['FIFTY_TAWI_DAYS'], 'אישור ניכוי המס (50 Tawi)',
-        'המעסיק צריך לתת לך את ה-50 Tawi תוך חודש מיום העזיבה. בלעדיו קשה להגיש דוח מס ולקבל החזר.');
+        `המעסיק חייב לדווח ל-Department of Employment, שמטפל בהיתרי העבודה, שעזבת ומה הסיבה, תוך ${r.DOE_REPORT_DAYS} יום מיום העזיבה. אחרי המועד, בקש מה-HR אישור בכתב שהדיווח הוגש. ההיתר שלך לשהות לא מחכה לדיווח הזה: הוא נגמר כבר ביום העבודה האחרון.`);
+      add('fifty-tawi', addMonths(last, r.FIFTY_TAWI_MONTHS), 'thai-tax-sso', ['FIFTY_TAWI_MONTHS'], 'אישור ניכוי המס (50 Tawi)',
+        'המעסיק חייב לתת לך את ה-50 Tawi, האישור על המס שנוכה מהמשכורת, תוך חודש מיום העזיבה, ואם לא הגיע, דרוש אותו מה-HR. לפיו ממלאים את דוח המס התאילנדי, ותצטרך אותו גם בישראל.');
       add('sso-cover-end', addMonths(last, r.SSO_COVER_MONTHS), 'insurance', ['SSO_COVER_MONTHS'], 'סוף הכיסוי הרפואי של ה-SSO',
-        `אם שילמת מספיק דמי ביטוח, ה-SSO ממשיך לכסות אותך ${r.SSO_COVER_MONTHS} חודשים אחרי סיום העבודה. מהיום הזה צריך ביטוח בריאות אחר.`);
+        `אם הפרשת מספיק חודשים, ה-SSO ממשיך לכסות אותך ${r.SSO_COVER_MONTHS} חודשים אחרי סיום העבודה, אבל בחינם רק בבית החולים שרשום אצלך. מחוץ לתאילנד הנח שאין לך כיסוי: ביטוח אחר צריך להתחיל לכל המאוחר ביום שתצא מתאילנד.`);
     }
 
-    const last90 = val('last90');
-    if (last90) {
-      const due = addDays(last90, r.NINETY_DAY_INTERVAL);
-      add('report-90-window', addDays(due, -r.NINETY_ONLINE_FROM), 'report-90', ['NINETY_DAY_INTERVAL', 'NINETY_ONLINE_FROM', 'NINETY_ONLINE_TO'],
+    // The next report counts from the previous due date, not from the day it was filed, so the date printed
+    // on the last receipt is the due date itself.
+    const due = val('next90');
+    if (due) {
+      add('report-90-window', addDays(due, -r.NINETY_ONLINE_FROM), 'report-90', ['NINETY_ONLINE_FROM', 'NINETY_ONLINE_TO'],
         'חלון דיווח 90 יום באינטרנט',
-        'בימים האלה אפשר להגיש את דיווח 90 היום באתר של לשכת ההגירה. אם יצאת מתאילנד לפני כן, הספירה מתחילה מחדש.',
+        'בימים האלה מגישים את דיווח 90 היום באינטרנט, רק באתר הרשמי tm47.immigration.go.th, ועדיף כבר ביום הראשון. אחרי החלפת דרכון, את הדיווח הראשון עושים במשרד. אם תצא מתאילנד לפני המועד, אין צורך לדווח: הספירה מתחילה מחדש.',
         { end: addDays(due, -r.NINETY_ONLINE_TO) });
-      add('report-90-due', due, 'report-90', ['NINETY_DAY_INTERVAL'], 'דיווח 90 יום',
-        'המועד של דיווח 90 היום. באינטרנט מגישים לפני המועד. במשרד ההגירה אפשר גם עד 7 ימים אחריו. איחור עולה בקנס.');
+      add('report-90-due', due, 'report-90', [], 'דיווח 90 יום',
+        `זה מועד דיווח 90 היום: באינטרנט החלון נסגר ${r.NINETY_ONLINE_TO} ימים לפניו, ובמשרד ההגירה אפשר עד 7 ימים אחריו. אחר כך יש קנס של 2,000 באט, ומדווחים רק בעצמך במשרד. החובה נמשכת גם אחרי סוף העבודה, עד שתצא מתאילנד.`);
     }
 
     const route = p.route === 'A' || p.route === 'B' ? p.route : null;
@@ -77,19 +78,19 @@
       const stayKeys = stamp ? [] : [a ? 'EXEMPT_DAYS' : 'TR_DAYS'];
       const by = stamp || addDays(entry, (a ? r.EXEMPT_DAYS : r.TR_DAYS) - 1); // the entry day is day 1
       const extra = stamp ? {} : { estimate: true };
-      add('stay-extend-by', by, 'stay-legal', stayKeys, 'המועד האחרון להגשת הארכה',
-        'עד התאריך שבחותמת הכניסה: הגש בקשת הארכה (TM.7) בלשכת ההגירה. האישור לשיקול דעת הפקיד.', extra);
+      add('stay-extend-by', by, 'stay-legal', stayKeys, 'בקשת הארכה: לפני התאריך שבחותמת',
+        'התאריך הזה הוא היום האחרון שמותר לך לשהות לפי חותמת הכניסה כתייר. הגש בעצמך בקשת הארכה (TM.7) במשרד ההגירה כמה ימי עבודה לפניו: ההארכה נספרת מסוף התקופה, אז הגשה מוקדמת לא מקצרת את השהייה. האישור לשיקול דעת הפקיד.', extra);
       if (route) {
         const ext = a ? r.EXTENSION_DAYS : r.TR_EXTENSION_DAYS;
         add('stay-end', addDays(by, ext), 'stay-legal', [...stayKeys, a ? 'EXTENSION_DAYS' : 'TR_EXTENSION_DAYS'], 'סוף השהייה, אם ההארכה אושרה',
-          `ההארכה מוסיפה עד ${ext} יום. אחרי התאריך הזה כל יום נוסף הוא שהייה לא חוקית, עם קנס.`, extra);
+          `ההארכה מוסיפה עד ${ext} יום, אז זה התאריך המאוחר ביותר. אם תקבל אותה, בדוק בדרכון את התאריך שנרשם וצא מתאילנד עד אליו: כל יום נוסף הוא שהייה לא חוקית, עם קנס על כל יום.`, extra);
       }
     }
 
     const moveOut = val('moveOut');
     if (moveOut) {
       add('lease-notice', addDays(moveOut, -r.LEASE_NOTICE_DAYS), 'lease', ['LEASE_NOTICE_DAYS'], 'הודעת עזיבה בכתב למשכיר',
-        `אם המשכיר עסקי (3 יחידות ומעלה) וגרת לפחות חצי מתקופת החוזה, מותר לצאת מוקדם בהודעה בכתב, לפחות ${r.LEASE_NOTICE_DAYS} יום מראש. אצל משכיר פרטי החוזה קובע. בכל מקרה: הודעה בכתב, ושמור עותק.`);
+        `אם המשכיר עסקי (3 יחידות ומעלה), החוזה נחתם מ-4.9.2025, גרת לפחות חצי מתקופתו ואין לך חוב, מותר לצאת מוקדם בהודעה בכתב לפחות ${r.LEASE_NOTICE_DAYS} יום מראש. בחוזה ישן יותר חל כלל דומה רק אצל משכיר עם 5 יחידות ומעלה, ואצל משכיר פרטי החוזה קובע. שמור הוכחה שההודעה התקבלה.`);
     }
 
     const left = val('leftIsraelOn'), flight = val('flightHome');
@@ -102,19 +103,20 @@
     }
     if (flight) {
       add('landing-check', addDays(flight, 7), 'il-btl-health', [], 'בדיקת מעמד בביטוח לאומי ובקופת החולים',
-        'בשבוע הראשון בארץ: בדוק בביטוח לאומי ובקופת החולים שאתה מבוטח ושאין חוב.');
-      add('customs-shipments-by', addMonths(flight, r.CUSTOMS_SHIPMENT_MONTHS), 'il-customs', ['CUSTOMS_SHIPMENT_MONTHS'], 'המועד האחרון להגעת המשלוחים',
-        `חפצי הבית צריכים להגיע לארץ עד ${r.CUSTOMS_SHIPMENT_MONTHS} חודשים מיום הנחיתה, בשני משלוחים לכל היותר. את התקופה אי אפשר להאריך.`);
+        'בשבוע הראשון בארץ, או כבר מחו״ל: בדוק בביטוח לאומי שאתה רשום כתושב ושאין חוב, והורד מהאתר האישי ׳אישור פירוט חשבון׳ ו׳אישור חברות יחיד׳. ודא מול הקופה שאתה זכאי לשירותים, ובדוק גם את הביטוח המשלים.');
+      // The nine months start on the landing day, so the last day inside them is one day before the date nine months on.
+      add('customs-shipments-by', addDays(addMonths(flight, r.CUSTOMS_SHIPMENT_MONTHS), -1), 'il-customs', ['CUSTOMS_SHIPMENT_MONTHS'], 'המועד האחרון להגעת המשלוחים',
+        `אם אתה זכאי כתושב חוזר, חפצי הבית צריכים להגיע לארץ בשני משלוחים לכל היותר, בתוך ${r.CUSTOMS_SHIPMENT_MONTHS} החודשים שמתחילים ביום הנחיתה, ואת התקופה אי אפשר להאריך. משלוח שיגיע לפני הנחיתה? לא ברור מה דינו, אז בקש קודם תשובה בכתב ממוקד המידע ביבוא אישי.`);
       add('pnd91-2026', r.PND91_FROM, 'after-leaving', ['PND91_FROM', 'PND91_TO'], 'דוח מס תאילנדי (PND 91) לשנת 2026',
-        'הזמן להגיש את דוח המס התאילנדי על 2026. דרכו מקבלים החזר, אם מגיע לך.', { end: r.PND91_TO });
+        'חובה להגיש אם קיבלת ב-2026 משכורת של יותר מ-120,000 באט (נשוי: יותר מ-220,000 יחד עם בן הזוג), גם אם כבר עזבת. גם בלי חובה, דרך הדוח מבקשים החזר על מס שנוכה ממך ביתר. מגישים ברשת גם מישראל, עם קוד SMS לנייד שרשום ב-RD.', { end: r.PND91_TO });
       add('il-report-2026', r.IL_REPORT_ONLINE, 'il-tax', ['IL_REPORT_ONLINE'], 'דוח מס ישראלי לשנת 2026',
-        'רק אם יועץ המס קבע שאתה צריך להגיש דוח. זה המועד להגשה מקוונת.');
+        'אם היית תושב ישראל ב-2026, משכורת ממעסיק תאילנדי מחייבת אותך בדרך כלל בדוח, ואת התושבות בודקים עם יועץ המס. זה המועד החוקי להגשה מקוונת, אלא אם תינתן ארכה. אין לך תיק במס הכנסה? פתח אותו לפני כן.');
     }
 
     const birth = val('birthDate');
     if (birth) {
       add('sso-claim-window', addYears(birth, r.SSO_CLAIM_FROM_AGE), 'after-leaving', ['SSO_CLAIM_FROM_AGE', 'SSO_CLAIM_TO_AGE'], 'חלון התביעה של כספי הזקנה ב-SSO',
-        `לפי ה-SSO, את כספי הזקנה תובעים מגיל ${r.SSO_CLAIM_FROM_AGE}, ותוך שנתיים מהיום שבו נוצרה הזכאות. יש מקורות שסותרים את זה, ראה המדריך.`,
+        `מקורות רשמיים סותרים: ה-SSO נותן את כספי הזקנה רק מגיל ${r.SSO_CLAIM_FROM_AGE}, מול סעיף 77 bis לחוק, שנותן אותם לזר שעוזב לפי תקנה. התקנה דורשת הסכם ביטוח סוציאלי עם תאילנד, ולישראל אין, אז כנראה תתבע מגיל ${r.SSO_CLAIM_FROM_AGE}, אם הביטוח הסתיים, ותוך שנתיים. שאל את ה-SSO בכתב.`,
         { end: addYears(birth, r.SSO_CLAIM_TO_AGE) });
     }
 
