@@ -28,6 +28,7 @@
   }
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body {
   margin: 0; background: var(--bg); color: var(--text);
@@ -172,7 +173,6 @@ input[type=date]::-webkit-date-and-time-value { text-align: right; }
 .steps-install li { margin-bottom: 12px; }
 .inline-icon { display: inline-block; vertical-align: -4px; color: var(--action); }
 .banner { position: sticky; top: 0; z-index: 15; padding: 10px 16px; padding-top: calc(10px + env(safe-area-inset-top)); text-align: center; font-size: 14.5px; font-weight: 600; background: var(--warn-bg); color: var(--warn); }
-.banner[hidden] { display: none; }
 .banner.update { display: block; width: 100%; border: 0; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; background: var(--action-bg); color: var(--on-action); }
 .tabs {
   position: fixed; inset: auto 0 0 0; z-index: 10; display: flex; justify-content: space-around;
