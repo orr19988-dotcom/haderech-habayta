@@ -326,7 +326,7 @@ input[type=date]::-webkit-date-and-time-value { text-align: right; }
       const d = next[0], n = E.diffDays(today, target(d, today));
       html += `<section class="card hero"><p class="eyebrow">${isOpen(d, today) ? 'פתוח עכשיו' : 'המועד הבא'}</p>
         <div class="count"><b>${n === 0 ? 'היום' : n}</b>${n === 0 ? '' : `<span>${n === 1 ? 'יום' : 'ימים'}${isOpen(d, today) ? ' עד שנסגר' : ''}</span>`}</div>
-        <h2>${T(d.title)}</h2><p class="muted">${T(fmtLong(target(d, today)))}</p>${flags(d)}
+        <h2>${T(d.title)}${chip(d.tag)}</h2><p class="muted">${T(fmtLong(target(d, today)))}</p>${flags(d)}
         <a class="btn" href="#guide/${d.guide}">מה עושים</a></section>`;
       if (next.length > 1) html += `<section class="card"><h2>אחר כך</h2><ul class="list mini">${next.slice(1).map(x => miniRow(x, today)).join('')}</ul><a class="small" href="#deadlines">כל המועדים</a></section>`;
     }
@@ -341,7 +341,7 @@ input[type=date]::-webkit-date-and-time-value { text-align: right; }
   function deadlineCard(d, today) {
     const past = (d.end || d.date) < today, t = target(d, today);
     return `<li class="dl${past ? ' past' : ''}"><div class="dl-date" aria-hidden="true"><b>${Number(t.slice(8))}</b><span>${monthShort(t)}</span></div>
-      <div class="dl-body"><h3>${T(d.title)}</h3><p class="dl-when">${T(when(d))} · <span class="rel">${rel(d, today)}</span></p>${flags(d)}
+      <div class="dl-body"><h3>${T(d.title)}${chip(d.tag)}</h3><p class="dl-when">${T(when(d))} · <span class="rel">${rel(d, today)}</span></p>${flags(d)}
       <p>${T(d.detail)}</p><div class="row">${past ? '' : `<button class="btn small" data-ics="${d.id}">הוסף ליומן</button>`}<a class="small" href="#guide/${d.guide}">למדריך</a></div></div></li>`;
   }
   function deadlines() {

@@ -32,75 +32,86 @@
   }
   function checkProfile(p) { return DATE_FIELDS.map(k => fieldWarning(p[k])).filter(Boolean); }
 
+  const RANK = { varies: 1, discretion: 2, unverified: 3 };
+
   // Which deadline comes from which field: plan, Task 2 table. A field with a warning is ignored.
+  // Each deadline names the rules it rests on and carries the strongest tag among their sources.
   function computeDeadlines(p, r) {
     const val = k => (p[k] && !fieldWarning(p[k]) ? p[k] : null);
+    const src = r.sources || {};
     const out = [];
-    const add = (id, date, guide, title, detail, extra) => out.push(Object.assign({ id, date, title, detail, guide }, extra));
+    const add = (id, date, guide, keys, title, detail, extra) => {
+      const tag = keys.map(k => src[k] && src[k].tag).filter(t => RANK[t]).sort((a, b) => RANK[b] - RANK[a])[0];
+      out.push(Object.assign({ id, date, title, detail, guide }, tag ? { tag } : {}, extra));
+    };
 
     const last = val('lastWorkDay');
     if (last) {
-      add('immigration-last-day', last, 'last-day', 'היום האחרון בעבודה: ההיתר נגמר',
+      add('immigration-last-day', last, 'last-day', [], 'היום האחרון בעבודה: ההיתר נגמר',
         'היתר העבודה וההארכה שקיבלת בזכות העבודה נגמרים היום, לא בתאריך שבחותמת. תכנן מראש: לצאת מתאילנד, או להגיע בבוקר ללשכת ההגירה עם מכתב מהמעסיק. ימים נוספים לעזיבה הם לשיקול דעת הפקיד, לא זכות.');
-      add('final-wages', addDays(last, r.FINAL_WAGES_DAYS), 'job-end', 'השכר האחרון',
-        `אם המעסיק הוא שסיים את העבודה, השכר שמגיע לך צריך להגיע תוך ${r.FINAL_WAGES_DAYS} ימים. אם התפטרת, הכלל אחר: ראה המדריך.`);
-      add('doe-report', addDays(last, r.DOE_REPORT_DAYS), 'last-day', 'המעסיק מדווח על סיום ההעסקה',
+      add('final-wages', addDays(last, r.FINAL_WAGES_DAYS), 'job-end', ['FINAL_WAGES_DAYS'], 'השכר האחרון',
+        `אם המעסיק הוא שסיים את העבודה, הוא משלם את כל מה שמגיע לך תוך ${r.FINAL_WAGES_DAYS} ימים. אם התפטרת, השכר משולם ביום התשלום הרגיל.`);
+      add('doe-report', addDays(last, r.DOE_REPORT_DAYS), 'last-day', ['DOE_REPORT_DAYS'], 'המעסיק מדווח על סיום ההעסקה',
         `המעסיק צריך לדווח למשרד התעסוקה (DOE) שעזבת, תוך ${r.DOE_REPORT_DAYS} יום. בקש ממנו אישור שדיווח.`);
-      add('fifty-tawi', addDays(last, r.FIFTY_TAWI_DAYS), 'thai-tax-sso', 'אישור ניכוי המס (50 Tawi)',
-        'עד היום הזה המעסיק צריך לתת לך את ה-50 Tawi. בלעדיו לא תוכל להגיש דוח מס ולקבל החזר.');
-      add('sso-cover-end', addMonths(last, r.SSO_COVER_MONTHS), 'insurance', 'סוף הכיסוי הרפואי של ה-SSO',
-        `הכיסוי הרפואי של ה-SSO נמשך ${r.SSO_COVER_MONTHS} חודשים אחרי סיום העבודה. מהיום הזה צריך ביטוח בריאות אחר.`);
+      add('fifty-tawi', addDays(last, r.FIFTY_TAWI_DAYS), 'thai-tax-sso', ['FIFTY_TAWI_DAYS'], 'אישור ניכוי המס (50 Tawi)',
+        'המעסיק צריך לתת לך את ה-50 Tawi תוך חודש מיום העזיבה. בלעדיו קשה להגיש דוח מס ולקבל החזר.');
+      add('sso-cover-end', addMonths(last, r.SSO_COVER_MONTHS), 'insurance', ['SSO_COVER_MONTHS'], 'סוף הכיסוי הרפואי של ה-SSO',
+        `אם שילמת מספיק דמי ביטוח, ה-SSO ממשיך לכסות אותך ${r.SSO_COVER_MONTHS} חודשים אחרי סיום העבודה. מהיום הזה צריך ביטוח בריאות אחר.`);
     }
 
     const last90 = val('last90');
     if (last90) {
       const due = addDays(last90, r.NINETY_DAY_INTERVAL);
-      add('report-90-window', addDays(due, -r.NINETY_ONLINE_FROM), 'report-90', 'חלון דיווח 90 יום אונליין',
+      add('report-90-window', addDays(due, -r.NINETY_ONLINE_FROM), 'report-90', ['NINETY_DAY_INTERVAL', 'NINETY_ONLINE_FROM', 'NINETY_ONLINE_TO'],
+        'חלון דיווח 90 יום באינטרנט',
         'בימים האלה אפשר להגיש את דיווח 90 היום באתר של לשכת ההגירה. אם יצאת מתאילנד לפני כן, הספירה מתחילה מחדש.',
         { end: addDays(due, -r.NINETY_ONLINE_TO) });
-      add('report-90-due', due, 'report-90', 'דיווח 90 יום', 'המועד של דיווח 90 היום. איחור עולה בקנס.');
+      add('report-90-due', due, 'report-90', ['NINETY_DAY_INTERVAL'], 'דיווח 90 יום',
+        'המועד של דיווח 90 היום. באינטרנט מגישים לפני המועד. במשרד ההגירה אפשר גם עד 7 ימים אחריו. איחור עולה בקנס.');
     }
 
     const route = p.route === 'A' || p.route === 'B' ? p.route : null;
     const stamp = val('stampUntil'), entry = val('touristEntry');
     if (route && (stamp || entry)) {
       const a = route === 'A', ext = a ? r.EXTENSION_DAYS : r.TR_EXTENSION_DAYS;
+      const stayKeys = stamp ? [] : [a ? 'EXEMPT_DAYS' : 'TR_DAYS'];
       const by = stamp || addDays(entry, (a ? r.EXEMPT_DAYS : r.TR_DAYS) - 1); // the entry day is day 1
       const extra = stamp ? {} : { estimate: true };
-      add('stay-extend-by', by, 'stay-legal', 'המועד האחרון להגשת הארכה',
+      add('stay-extend-by', by, 'stay-legal', stayKeys, 'המועד האחרון להגשת הארכה',
         'עד התאריך שבחותמת הכניסה: הגש בקשת הארכה (TM.7) בלשכת ההגירה. האישור לשיקול דעת הפקיד.', extra);
-      add('stay-end', addDays(by, ext), 'stay-legal', 'סוף השהייה, אם ההארכה אושרה',
+      add('stay-end', addDays(by, ext), 'stay-legal', [...stayKeys, a ? 'EXTENSION_DAYS' : 'TR_EXTENSION_DAYS'], 'סוף השהייה, אם ההארכה אושרה',
         `ההארכה מוסיפה עד ${ext} יום. אחרי התאריך הזה כל יום נוסף הוא שהייה לא חוקית, עם קנס.`, extra);
     }
 
     const moveOut = val('moveOut');
     if (moveOut) {
-      add('lease-notice', addDays(moveOut, -r.LEASE_NOTICE_DAYS), 'lease', 'הודעת עזיבה בכתב למשכיר',
-        `תן למשכיר הודעה בכתב לפחות ${r.LEASE_NOTICE_DAYS} יום לפני היציאה, ושמור עותק. ההודעה חשובה להחזר הפיקדון.`);
+      add('lease-notice', addDays(moveOut, -r.LEASE_NOTICE_DAYS), 'lease', ['LEASE_NOTICE_DAYS'], 'הודעת עזיבה בכתב למשכיר',
+        `אם המשכיר עסקי (3 יחידות ומעלה) וגרת לפחות חצי מתקופת החוזה, מותר לצאת מוקדם בהודעה בכתב, לפחות ${r.LEASE_NOTICE_DAYS} יום מראש. אצל משכיר פרטי החוזה קובע. בכל מקרה: הודעה בכתב, ושמור עותק.`);
     }
 
     const left = val('leftIsraelOn'), flight = val('flightHome');
     if (left) {
-      const earliest = addYears(left, r.CUSTOMS_YEARS);
-      add('customs-earliest', earliest, 'il-customs', 'נחיתה בארץ: התאריך המוקדם להטבות המכס',
-        `הטבות המכס של תושב חוזר דורשות לפחות ${r.CUSTOMS_YEARS} שנים בחו״ל. נחיתה לפני התאריך הזה עלולה לבטל אותן. ביקורים בארץ בתקופה הזו נספרים, ראה המדריך.`,
+      // Customs counts each year abroad from the day after departure, so the first safe landing day is one day later.
+      const earliest = addDays(addYears(left, r.CUSTOMS_YEARS), 1);
+      add('customs-earliest', earliest, 'il-customs', ['CUSTOMS_YEARS'], 'נחיתה בארץ: התאריך המוקדם להטבות המכס',
+        `הטבות המכס לתושב חוזר דורשות ${r.CUSTOMS_YEARS} שנים מלאות בחו״ל, שנספרות ממחרת היציאה. נחיתה לפני התאריך הזה מבטלת אותן, ולכן כדאי להשאיר כמה ימי מרווח. ביקורים בארץ מותרים עד 4 חודשים בכל שנה, ראה המדריך.`,
         flight && flight < earliest ? { warn: true } : {});
     }
     if (flight) {
-      add('landing-check', addDays(flight, 7), 'il-btl-health', 'בדיקת מעמד בביטוח לאומי ובקופת החולים',
+      add('landing-check', addDays(flight, 7), 'il-btl-health', [], 'בדיקת מעמד בביטוח לאומי ובקופת החולים',
         'בשבוע הראשון בארץ: בדוק בביטוח לאומי ובקופת החולים שאתה מבוטח ושאין חוב.');
-      add('customs-shipments-by', addMonths(flight, r.CUSTOMS_SHIPMENT_MONTHS), 'il-customs', 'המועד האחרון להגעת המשלוחים',
-        `כדי לשמור על פטור המכס, החפצים שלך צריכים להגיע לארץ עד ${r.CUSTOMS_SHIPMENT_MONTHS} חודשים אחרי הנחיתה.`);
-      add('pnd91-2026', r.PND91_FROM, 'after-leaving', 'דוח מס תאילנדי (PND 91) לשנת 2026',
+      add('customs-shipments-by', addMonths(flight, r.CUSTOMS_SHIPMENT_MONTHS), 'il-customs', ['CUSTOMS_SHIPMENT_MONTHS'], 'המועד האחרון להגעת המשלוחים',
+        `חפצי הבית צריכים להגיע לארץ עד ${r.CUSTOMS_SHIPMENT_MONTHS} חודשים מיום הנחיתה, בשני משלוחים לכל היותר. את התקופה אי אפשר להאריך.`);
+      add('pnd91-2026', r.PND91_FROM, 'after-leaving', ['PND91_FROM', 'PND91_TO'], 'דוח מס תאילנדי (PND 91) לשנת 2026',
         'הזמן להגיש את דוח המס התאילנדי על 2026. דרכו מקבלים החזר, אם מגיע לך.', { end: r.PND91_TO });
-      add('il-report-2026', r.IL_REPORT_ONLINE, 'il-tax', 'דוח מס ישראלי לשנת 2026',
+      add('il-report-2026', r.IL_REPORT_ONLINE, 'il-tax', ['IL_REPORT_ONLINE'], 'דוח מס ישראלי לשנת 2026',
         'רק אם יועץ המס קבע שאתה צריך להגיש דוח. זה המועד להגשה מקוונת.');
     }
 
     const birth = val('birthDate');
     if (birth) {
-      add('sso-claim-window', addYears(birth, r.SSO_CLAIM_FROM_AGE), 'after-leaving', 'חלון התביעה של כספי הזקנה ב-SSO',
-        `לפי ה-SSO, את כספי הזקנה תובעים מגיל ${r.SSO_CLAIM_FROM_AGE} ועד גיל ${r.SSO_CLAIM_TO_AGE}. יש מקורות שסותרים את זה, ראה המדריך.`,
+      add('sso-claim-window', addYears(birth, r.SSO_CLAIM_FROM_AGE), 'after-leaving', ['SSO_CLAIM_FROM_AGE', 'SSO_CLAIM_TO_AGE'], 'חלון התביעה של כספי הזקנה ב-SSO',
+        `לפי ה-SSO, את כספי הזקנה תובעים מגיל ${r.SSO_CLAIM_FROM_AGE}, ותוך שנתיים מהיום שבו נוצרה הזכאות. יש מקורות שסותרים את זה, ראה המדריך.`,
         { end: addYears(birth, r.SSO_CLAIM_TO_AGE) });
     }
 
