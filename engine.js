@@ -163,12 +163,13 @@
   function waUrl(text) { return 'https://wa.me/?text=' + encodeURIComponent(text); }
 
   // Latin and number runs (TM.7, 1,900, +66 2 204 9200, 1–3) go inside <bdi> so they keep
-  // their order inside Hebrew. Everything else is escaped.
-  const RUN = /([A-Za-z0-9+][A-Za-z0-9+.,:/%\u2013 -]*[A-Za-z0-9%])/;
+  // their order inside Hebrew. One separator between two tokens, so "90. 3" (a sentence break) is two runs.
+  // Everything else is escaped.
+  const RUN = /([A-Za-z0-9+][A-Za-z0-9%]*(?:[.,:/+\u2013 -][A-Za-z0-9+][A-Za-z0-9%]*)*)/;
   const ENT = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
   function inline(text) {
     return String(text).split(RUN)
-      .map((part, i) => (i % 2 ? `<bdi dir="ltr">${part}</bdi>` : part.replace(/[&<>"']/g, c => ENT[c]))).join('');
+      .map((part, i) => (i % 2 && part.length > 1 ? `<bdi dir="ltr">${part}</bdi>` : part.replace(/[&<>"']/g, c => ENT[c]))).join('');
   }
 
   return { addDays, addMonths, addYears, diffDays, isValidISO, checkProfile, computeDeadlines, upcoming, toICS, waUrl, inline };
