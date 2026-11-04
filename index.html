@@ -256,6 +256,8 @@ input[type=date]::-webkit-date-and-time-value { text-align: right; }
   const T = s => E.inline(s);
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const tel = n => 'tel:' + String(n).replace(/[^\d+]/g, '');
+  // ponytail: a WhatsApp-only line is spotted by its label; add a field to emergency.json if more appear.
+  const dial = n => (/וואטסאפ/.test(n.label) ? 'https://wa.me/' + n.number.replace(/\D/g, '') : tel(n.number));
 
   // Storage: only dates, a first name and checklist ticks. Everything works without it.
   let storageOk = true;
@@ -398,7 +400,7 @@ input[type=date]::-webkit-date-and-time-value { text-align: right; }
   function emergency() {
     const em = C.emergency;
     let html = header('חירום') + '<p class="muted">הקשה על מספר מחייגת אליו.</p>';
-    html += em.numbers.map(n => `<a class="call" href="${tel(n.number)}"><span class="call-text"><b>${T(n.label)}</b>${n.note ? `<small>${T(n.note)}</small>` : ''}${chip(n.tag) ? `<span>${chip(n.tag)}</span>` : ''}</span><bdi dir="ltr" class="call-num">${esc(n.number)}</bdi></a>`).join('');
+    html += em.numbers.map(n => `<a class="call" href="${dial(n)}"${/^https/.test(dial(n)) ? ' target="_blank" rel="noopener"' : ''}><span class="call-text"><b>${T(n.label)}</b>${n.note ? `<small>${T(n.note)}</small>` : ''}${chip(n.tag) ? `<span>${chip(n.tag)}</span>` : ''}</span><bdi dir="ltr" class="call-num">${esc(n.number)}</bdi></a>`).join('');
     const eg = guideById.emergency;
     html += `<a class="card next" href="#guide/emergency"><span class="muted small">מה עושים במצב חירום, צעד אחר צעד</span><b>${T(eg ? eg.title : 'כרטיס חירום')}</b></a>`;
     if (em.places.length) html += '<h2 class="stage">מקומות</h2>' + em.places.map(p => `<section class="card place"><h3>${T(p.name_he)}${chip(p.tag)}</h3>
