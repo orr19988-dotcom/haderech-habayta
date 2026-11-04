@@ -68,7 +68,7 @@
         'בימים האלה מגישים את דיווח 90 היום באינטרנט, רק באתר הרשמי tm47.immigration.go.th, ועדיף כבר ביום הראשון. אחרי החלפת דרכון, את הדיווח הראשון עושים במשרד. אם תצא מתאילנד לפני המועד, אין צורך לדווח: הספירה מתחילה מחדש.',
         { end: addDays(due, -r.NINETY_ONLINE_TO) });
       add('report-90-due', due, 'report-90', [], 'דיווח 90 יום',
-        `זה מועד דיווח 90 היום: באינטרנט החלון נסגר ${r.NINETY_ONLINE_TO} ימים לפניו, ובמשרד ההגירה אפשר עד 7 ימים אחריו. אחר כך יש קנס של 2,000 באט, ומדווחים רק בעצמך במשרד. החובה נמשכת גם אחרי סוף העבודה, עד שתצא מתאילנד.`);
+        `זה מועד דיווח 90 היום. באינטרנט שלח עד ${r.NINETY_ONLINE_TO} ימים לפניו: על מועד הסגירה המקורות הרשמיים סותרים. במשרד ההגירה אפשר עד 7 ימים אחריו, ואחר כך יש קנס של 2,000 באט ומדווחים רק בעצמך. החובה נמשכת עד שתצא מתאילנד.`);
     }
 
     const route = p.route === 'A' || p.route === 'B' ? p.route : null;
@@ -104,9 +104,9 @@
     if (flight) {
       add('landing-check', addDays(flight, 7), 'il-btl-health', [], 'בדיקת מעמד בביטוח לאומי ובקופת החולים',
         'בשבוע הראשון בארץ, או כבר מחו״ל: בדוק בביטוח לאומי שאתה רשום כתושב ושאין חוב, והורד מהאתר האישי ׳אישור פירוט חשבון׳ ו׳אישור חברות יחיד׳. ודא מול הקופה שאתה זכאי לשירותים, ובדוק גם את הביטוח המשלים.');
-      // The nine months start on the landing day, so the last day inside them is one day before the date nine months on.
-      add('customs-shipments-by', addDays(addMonths(flight, r.CUSTOMS_SHIPMENT_MONTHS), -1), 'il-customs', ['CUSTOMS_SHIPMENT_MONTHS'], 'המועד האחרון להגעת המשלוחים',
-        `אם אתה זכאי כתושב חוזר, חפצי הבית צריכים להגיע לארץ בשני משלוחים לכל היותר, בתוך ${r.CUSTOMS_SHIPMENT_MONTHS} החודשים שמתחילים ביום הנחיתה, ואת התקופה אי אפשר להאריך. משלוח שיגיע לפני הנחיתה? לא ברור מה דינו, אז בקש קודם תשובה בכתב ממוקד המידע ביבוא אישי.`);
+      // Customs procedure 10.2(6): the landing day is not counted, so the last day is the same date nine months on, inclusive.
+      add('customs-shipments-by', addMonths(flight, r.CUSTOMS_SHIPMENT_MONTHS), 'il-customs', ['CUSTOMS_SHIPMENT_MONTHS'], 'המועד האחרון להגעת המשלוחים',
+        `אם אתה זכאי כתושב חוזר, חפצי הבית צריכים להגיע לארץ בשני משלוחים לכל היותר, עד ${r.CUSTOMS_SHIPMENT_MONTHS} חודשים מיום הנחיתה, ואת התקופה אי אפשר להאריך. לפי נוהל המכס יום הנחיתה לא נספר, ולכן התאריך שכאן הוא עצמו היום האחרון: השאר כמה ימי מרווח. משלוח שיגיע לפני הנחיתה? לא ברור מה דינו, אז בקש קודם תשובה בכתב ממוקד המידע ביבוא אישי.`);
       add('pnd91-2026', r.PND91_FROM, 'after-leaving', ['PND91_FROM', 'PND91_TO'], 'דוח מס תאילנדי (PND 91) לשנת 2026',
         'חובה להגיש אם קיבלת ב-2026 משכורת של יותר מ-120,000 באט (נשוי: יותר מ-220,000 יחד עם בן הזוג), גם אם כבר עזבת. גם בלי חובה, דרך הדוח מבקשים החזר על מס שנוכה ממך ביתר. מגישים ברשת גם מישראל, עם קוד SMS לנייד שרשום ב-RD.', { end: r.PND91_TO });
       add('il-report-2026', r.IL_REPORT_ONLINE, 'il-tax', ['IL_REPORT_ONLINE'], 'דוח מס ישראלי לשנת 2026',
@@ -115,9 +115,12 @@
 
     const birth = val('birthDate');
     if (birth) {
-      add('sso-claim-window', addYears(birth, r.SSO_CLAIM_FROM_AGE), 'after-leaving', ['SSO_CLAIM_FROM_AGE', 'SSO_CLAIM_TO_AGE'], 'חלון התביעה של כספי הזקנה ב-SSO',
+      // The right needs both: age 55 and an ended insurance (SSO form 6-09: the day after the last work day).
+      const at55 = addYears(birth, r.SSO_CLAIM_FROM_AGE), insEnd = last ? addDays(last, 1) : null;
+      const from = insEnd && insEnd > at55 ? insEnd : at55;
+      add('sso-claim-window', from, 'after-leaving', ['SSO_CLAIM_FROM_AGE', 'SSO_CLAIM_TO_AGE'], 'חלון התביעה של כספי הזקנה ב-SSO',
         `מקורות רשמיים סותרים: ה-SSO נותן את כספי הזקנה רק מגיל ${r.SSO_CLAIM_FROM_AGE}, מול סעיף 77 bis לחוק, שנותן אותם לזר שעוזב לפי תקנה. התקנה דורשת הסכם ביטוח סוציאלי עם תאילנד, ולישראל אין, אז כנראה תתבע מגיל ${r.SSO_CLAIM_FROM_AGE}, אם הביטוח הסתיים, ותוך שנתיים. שאל את ה-SSO בכתב.`,
-        { end: addYears(birth, r.SSO_CLAIM_TO_AGE) });
+        { end: addYears(from, r.SSO_CLAIM_TO_AGE - r.SSO_CLAIM_FROM_AGE) });
     }
 
     return out.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.id < b.id ? -1 : 1));
