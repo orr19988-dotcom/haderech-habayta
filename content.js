@@ -1,7 +1,7 @@
 // Built by tools/build-content.mjs from content-src/. Do not edit by hand.
 window.CONTENT = {
  "meta": {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "verifiedAt": "2026-11-04"
  },
  "rules": {

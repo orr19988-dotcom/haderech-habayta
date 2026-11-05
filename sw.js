@@ -1,6 +1,6 @@
 // Offline cache, cache-first. Never rename this file. Bump VERSION on every release:
 // that is how phones find out there is a new version.
-const VERSION = 'hb-1';
+const VERSION = 'hb-2';
 const FILES = ['./', './index.html', './engine.js', './content.js', './manifest.webmanifest',
   './icons/icon-180.png', './icons/icon-192.png', './icons/icon-512.png'];
 

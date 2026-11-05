@@ -165,6 +165,12 @@
     return lines.map(fold).join('');
   }
 
+  // The monthly check card is due one calendar month after the content was last checked (meta.verifiedAt)
+  // or after he last asked for a check, whichever is later. A stored value that is not a real date is ignored.
+  function monthlyDue(verifiedAt, askedAt) {
+    return addMonths(isValidISO(askedAt) && askedAt > verifiedAt ? askedAt : verifiedAt, 1);
+  }
+
   function waUrl(text) { return 'https://wa.me/?text=' + encodeURIComponent(text); }
 
   // Latin and number runs (TM.7, 1,900, +66 2 204 9200, 1–3) go inside <bdi> so they keep
@@ -178,5 +184,5 @@
       .map((part, i) => (i % 2 && part.length > 1 ? `<bdi dir="ltr">${part}</bdi>` : part.replace(/[&<>"']/g, c => ENT[c]))).join('');
   }
 
-  return { addDays, addMonths, addYears, diffDays, isValidISO, checkProfile, computeDeadlines, upcoming, toICS, waUrl, inline };
+  return { addDays, addMonths, addYears, diffDays, isValidISO, checkProfile, computeDeadlines, upcoming, toICS, monthlyDue, waUrl, inline };
 });

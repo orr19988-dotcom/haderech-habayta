@@ -307,7 +307,13 @@ input[type=date]::-webkit-date-and-time-value { text-align: right; }
     const msg = `${text}\n\n(הדרך הביתה, גרסה ${C.meta.version})`;
     return `<section class="card"><h2>${title}</h2><p class="muted small">נפתחת הודעת וואטסאפ מוכנה: "תעדכן ___". משלימים מה השתנה ובוחרים למי לשלוח.</p><a class="btn ghost block" href="${esc(E.waUrl(msg))}" target="_blank" rel="noopener">${svg(I.chat, 20)} בקש עדכון בוואטסאפ</a></section>`;
   }
-  const sourcesList = list => `<ol class="sources">${list.map((s, n) => `<li id="src-${n}"><a href="${esc(s.url)}" target="_blank" rel="noopener">${T(s.title)}</a> <span class="muted small">נבדק ב-${T(fmt(s.checked))}</span></li>`).join('')}</ol>`;
+  // Once a month (from the last content check, or from his last request) the home screen asks him to send a check request.
+  function monthlyCard(today) {
+    if (today < E.monthlyDue(C.meta.verifiedAt, load('hb.monthlyAsked', null))) return '';
+    const msg = `בדיקה חודשית: תבדוק בבקשה שהכללים באפליקציה עדיין נכונים.\n\n(הדרך הביתה, גרסה ${C.meta.version}, הכללים נבדקו ב-${fmt(C.meta.verifiedAt)})`;
+    return `<section class="card"><p class="eyebrow">פעם בחודש</p><h2>הבדיקה החודשית</h2><p>הכללים באפליקציה נבדקו לאחרונה מול המקורות הרשמיים ב-${T(fmt(C.meta.verifiedAt))}. שלח בקשה לבדיקה, והעדכון יגיע לכאן.</p><a class="btn block" data-action="monthly" href="${esc(E.waUrl(msg))}" target="_blank" rel="noopener">${svg(I.chat, 20)} שלח בקשה בוואטסאפ</a></section>`;
+  }
+  const sourcesList = list =>`<ol class="sources">${list.map((s, n) => `<li id="src-${n}"><a href="${esc(s.url)}" target="_blank" rel="noopener">${T(s.title)}</a> <span class="muted small">נבדק ב-${T(fmt(s.checked))}</span></li>`).join('')}</ol>`;
 
   function stageNow(today) {
     const f = valid('flightHome'), l = valid('lastWorkDay');
@@ -323,6 +329,7 @@ input[type=date]::-webkit-date-and-time-value { text-align: right; }
       const n = E.diffDays(today, f);
       html += `<p class="lead">${n > 1 ? `עוד ${days(n)} לנחיתה בבית` : n === 1 ? 'מחר נוחתים בבית' : n === 0 ? 'היום נוחתים בבית. נסיעה טובה!' : 'ברוך שובך הביתה'}</p>`;
     }
+    html += monthlyCard(today);
     if (!ds.length) html += invite();
     else if (!next.length) html += '<section class="card"><h2>אין מועדים קרובים</h2><p class="muted">כל המועדים שחישבנו כבר עברו. אפשר לעדכן תאריכים ב"הפרטים שלי".</p></section>';
     else {
@@ -537,6 +544,8 @@ input[type=date]::-webkit-date-and-time-value { text-align: right; }
     else if (a === 'ics-all') { const today = todayISO(); downloadICS(deadlinesNow().filter(d => (d.end || d.date) >= today), 'haderech-habayta.ics'); }
     else if (a === 'copy') copyDeadlines();
     else if (a === 'print') printSheet();
+    else if (a === 'monthly' && navigator.onLine === false) { e.preventDefault(); toast('אין חיבור לאינטרנט. נסה שוב כשתהיה מחובר.'); } // nothing can be sent: keep the card
+    else if (a === 'monthly') { save('hb.monthlyAsked', todayISO()); setTimeout(() => { render(true); toast('תודה. הכרטיס יחזור בעוד חודש.'); }, 300); } // the link still opens WhatsApp
     else if (a === 'install-done') { save('hb.installSeen', true); location.hash = '#home'; }
     else if (a === 'wipe' && confirm('למחוק מהטלפון את כל הפרטים והסימונים?')) { profile = {}; done = {}; save('hb.profile', profile); save('hb.checklist', done); render(); toast('נמחק'); }
   });
