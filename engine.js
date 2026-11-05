@@ -171,6 +171,38 @@
     return addMonths(isValidISO(askedAt) && askedAt > verifiedAt ? askedAt : verifiedAt, 1);
   }
 
+  // The sender reminds him once per monthly anniversary of the last check: the latest one not after today
+  // (k = 1..60 months), or null before the first.
+  function lastMonthlyDay(verifiedAt, today) {
+    let last = null;
+    for (let k = 1; k <= 60; k++) {
+      const d = addMonths(verifiedAt, k);
+      if (d > today) break;
+      last = d;
+    }
+    return last;
+  }
+
+  // At most one popup per opening: an unread notice first, then the monthly check, once a day while it is due.
+  function pickPopup(s) {
+    if (s.notice && s.notice.id && s.notice.id !== s.noticeSeen) return 'notice';
+    if (s.today >= s.due && s.popupDay !== s.today) return 'monthly';
+    return null;
+  }
+
+  // The push subscription travels to the owner by WhatsApp as "HB1:" + base64 (no _ * ~ ` for WhatsApp to format).
+  function pushCode(sub) {
+    return 'HB1:' + btoa(JSON.stringify({ e: sub.endpoint, p: sub.keys.p256dh, a: sub.keys.auth }));
+  }
+  function readPushCode(text) {
+    const m = /HB1:([A-Za-z0-9+/=]+)/.exec(String(text || ''));
+    if (!m) return null;
+    try {
+      const o = JSON.parse(atob(m[1]));
+      return /^https:\/\/\S+$/.test(o.e) && o.p && o.a ? { endpoint: o.e, keys: { p256dh: o.p, auth: o.a } } : null;
+    } catch (e) { return null; }
+  }
+
   function waUrl(text) { return 'https://wa.me/?text=' + encodeURIComponent(text); }
 
   // Latin and number runs (TM.7, 1,900, +66 2 204 9200, 1–3) go inside <bdi> so they keep
@@ -184,5 +216,5 @@
       .map((part, i) => (i % 2 && part.length > 1 ? `<bdi dir="ltr">${part}</bdi>` : part.replace(/[&<>"']/g, c => ENT[c]))).join('');
   }
 
-  return { addDays, addMonths, addYears, diffDays, isValidISO, checkProfile, computeDeadlines, upcoming, toICS, monthlyDue, waUrl, inline };
+  return { addDays, addMonths, addYears, diffDays, isValidISO, checkProfile, computeDeadlines, upcoming, toICS, monthlyDue, lastMonthlyDay, pickPopup, pushCode, readPushCode, waUrl, inline };
 });

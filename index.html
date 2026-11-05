@@ -192,6 +192,9 @@ input[type=date]::-webkit-date-and-time-value { text-align: right; }
 }
 #toast.show { opacity: 1; transform: none; }
 @media (prefers-reduced-motion: reduce) { #toast { transition: none; } }
+.popup { width: min(420px, calc(100% - 32px)); border: 0; border-radius: 18px; padding: 20px; background: var(--card); color: var(--text); box-shadow: 0 12px 40px rgba(0, 0, 0, .28); }
+.popup::backdrop { background: rgba(23, 18, 14, .5); }
+.popup:not([open]) { display: none; } /* iOS before 15.4 does not know <dialog> */
 #print { display: none; }
 @media print {
   body { background: #fff; color: #000; padding: 0; font-size: 12pt; }
@@ -216,6 +219,7 @@ input[type=date]::-webkit-date-and-time-value { text-align: right; }
   <a href="#emergency" data-tab="emergency"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3.5h3l1.5 4.5-2 1.2a11 11 0 0 0 5.8 5.8l1.2-2 4.5 1.5v3a2 2 0 0 1-2 2A16.5 16.5 0 0 1 4.5 5.5a2 2 0 0 1 2-2z"/></svg>חירום</a>
 </nav>
 <div id="toast" role="status" aria-live="polite"></div>
+<dialog id="popup" class="popup" aria-labelledby="popup-title"></dialog>
 <section id="print"></section>
 <script src="engine.js"></script>
 <script src="content.js"></script>
@@ -224,6 +228,7 @@ input[type=date]::-webkit-date-and-time-value { text-align: right; }
   'use strict';
   const E = window.Engine, C = window.CONTENT;
   const view = document.getElementById('view');
+  const PUSH_OK = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 
   const STAGES = { before: 'לפני שהעבודה נגמרת', vacation: 'חודשיים חופשה', israel: 'מול ישראל', after: 'אחרי העזיבה', always: 'בכל שלב' };
   const KINDS = [['rights', 'מה מגיע לך ומה חובה'], ['steps', 'צעד אחר צעד'], ['docs', 'מסמכים'], ['where', 'איפה ומתי'], ['cost', 'כמה עולה'], ['traps', 'מלכודות']];
@@ -308,10 +313,65 @@ input[type=date]::-webkit-date-and-time-value { text-align: right; }
     return `<section class="card"><h2>${title}</h2><p class="muted small">נפתחת הודעת וואטסאפ מוכנה: "תעדכן ___". משלימים מה השתנה ובוחרים למי לשלוח.</p><a class="btn ghost block" href="${esc(E.waUrl(msg))}" target="_blank" rel="noopener">${svg(I.chat, 20)} בקש עדכון בוואטסאפ</a></section>`;
   }
   // Once a month (from the last content check, or from his last request) the home screen asks him to send a check request.
-  function monthlyCard(today) {
-    if (today < E.monthlyDue(C.meta.verifiedAt, load('hb.monthlyAsked', null))) return '';
+  const monthlyDueNow = () => E.monthlyDue(C.meta.verifiedAt, load('hb.monthlyAsked', null));
+  const monthlyText = () => `הכללים באפליקציה נבדקו לאחרונה מול המקורות הרשמיים ב-${T(fmt(C.meta.verifiedAt))}. שלח בקשה לבדיקה, והעדכון יגיע לכאן.`;
+  function monthlyLink() {
     const msg = `בדיקה חודשית: תבדוק בבקשה שהכללים באפליקציה עדיין נכונים.\n\n(הדרך הביתה, גרסה ${C.meta.version}, הכללים נבדקו ב-${fmt(C.meta.verifiedAt)})`;
-    return `<section class="card"><p class="eyebrow">פעם בחודש</p><h2>הבדיקה החודשית</h2><p>הכללים באפליקציה נבדקו לאחרונה מול המקורות הרשמיים ב-${T(fmt(C.meta.verifiedAt))}. שלח בקשה לבדיקה, והעדכון יגיע לכאן.</p><a class="btn block" data-action="monthly" href="${esc(E.waUrl(msg))}" target="_blank" rel="noopener">${svg(I.chat, 20)} שלח בקשה בוואטסאפ</a></section>`;
+    return `<a class="btn block" data-action="monthly" href="${esc(E.waUrl(msg))}" target="_blank" rel="noopener">${svg(I.chat, 20)} שלח בקשה בוואטסאפ</a>`;
+  }
+  function monthlyCard(today) {
+    if (today < monthlyDueNow()) return '';
+    return `<section class="card"><p class="eyebrow">פעם בחודש</p><h2>הבדיקה החודשית</h2><p>${monthlyText()}</p>${monthlyLink()}</section>`;
+  }
+
+  // Notifications (iPhone: only in the app opened from the home screen, iOS 16.4+). Step 1 turns them on and
+  // subscribes; step 2 sends the subscription code by WhatsApp, once. The code is stored only on his phone.
+  const PUSH_BLOCKED = 'ההתראות חסומות באייפון. כדי להפעיל אותן: הגדרות, התראות, הדרך הביתה, אפשר התראות. אם האפליקציה לא מופיעה שם, מחק את האייקון, הוסף את האתר שוב למסך הבית והפעל התראות מחדש.';
+  const pushSendLink = (code, label) => `<a class="btn block" data-action="push-sent" href="${esc(E.waUrl(`הפעלתי התראות באפליקציה הדרך הביתה. זה הקוד:\n${code}`))}" target="_blank" rel="noopener">${svg(I.chat, 20)} ${label}</a>`;
+  function pushCard(today) {
+    if (!PUSH_OK || !standalone) return '';
+    const code = load('hb.pushCode', null), later = load('hb.pushLater', null);
+    if (code && load('hb.pushSent', null) === code) return '';
+    if (code) return `<section class="card"><p class="eyebrow">עוד צעד אחד</p><h2>שלח את קוד ההתראות</h2><p>שלח את הקוד בוואטסאפ למי שמתחזק את האפליקציה. אחרי שהוא יגדיר אותו, ההודעות יתחילו להגיע.</p>${pushSendLink(code, 'שלח את הקוד בוואטסאפ')}</section>`;
+    if (E.isValidISO(later) && today < E.addDays(later, 30)) return '';
+    if (Notification.permission === 'denied') return `<section class="card"><p class="eyebrow">התראות</p><p>${PUSH_BLOCKED}</p><button class="btn ghost block" data-action="push-later">הבנתי</button></section>`;
+    return `<section class="card"><p class="eyebrow">התראות</p><h2>הודעות גם כשהאפליקציה סגורה</h2><p>הפעל התראות פעם אחת, והתזכורת החודשית ועדכונים חשובים יקפצו לך בטלפון.</p><p class="muted small">בחלון שייפתח בחר "אפשר" (Allow). האייפון שואל רק פעם אחת.</p><button class="btn block" data-action="push-on">הפעל התראות</button><button class="btn ghost block" data-action="push-later">לא עכשיו</button></section>`;
+  }
+  // On the About screen: the notification status, and a way to send the code again if it never arrived.
+  function pushAbout() {
+    if (!PUSH_OK || !standalone) return '<p>התראות עובדות רק באפליקציה שנפתחת מהאייקון במסך הבית, באייפון עם iOS 16.4 ומעלה.</p>';
+    const code = load('hb.pushCode', null);
+    if (Notification.permission === 'denied') return `<p>${PUSH_BLOCKED}</p>`;
+    if (!code) return '<p>ההתראות כבויות.</p><button class="btn block" data-action="push-on">הפעל התראות</button>';
+    return `<p>${load('hb.pushSent', null) === code ? 'ההתראות מופעלות בטלפון הזה. אם הקוד לא הגיע, אפשר לשלוח אותו שוב.' : 'ההתראות מופעלות, ונשאר לשלוח את הקוד.'}</p>${pushSendLink(code, 'שלח שוב את קוד ההתראות')}`;
+  }
+  async function pushOn() {
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') { render(true); toast('ההתראות לא הופעלו. אפשר להפעיל אותן בהגדרות של האייפון.'); return; }
+      const reg = await navigator.serviceWorker.ready;
+      const key = Uint8Array.from(atob(C.meta.pushKey.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+      const sub = (await reg.pushManager.getSubscription()) || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
+      save('hb.pushCode', E.pushCode(sub.toJSON()));
+      render(true); toast('ההתראות הופעלו. נשאר לשלוח את הקוד.');
+    } catch (err) { toast('לא הצלחתי להפעיל התראות. נסה שוב.'); }
+  }
+
+  // One popup per opening (E.pickPopup): an unread notice, or the monthly check once a day while it is due.
+  const popup = document.getElementById('popup');
+  function closePopup() { if (popup && popup.open) popup.close(); }
+  function maybePopup() {
+    if (!popup || typeof popup.showModal !== 'function' || popup.open) return;
+    const today = todayISO(), n = C.meta.notice;
+    const kind = E.pickPopup({ notice: n, noticeSeen: load('hb.noticeSeen', null), due: monthlyDueNow(), today, popupDay: load('hb.monthlyPopupDay', null) });
+    if (kind === 'notice') {
+      popup.innerHTML = `<h2 id="popup-title">${T(n.title)}</h2><p>${T(n.text)}</p><button class="btn block" data-action="popup-close">הבנתי</button>`;
+      save('hb.noticeSeen', n.id);
+    } else if (kind === 'monthly') {
+      popup.innerHTML = `<p class="eyebrow">פעם בחודש</p><h2 id="popup-title">הבדיקה החודשית</h2><p>${monthlyText()}</p>${monthlyLink()}<button class="btn ghost block" data-action="popup-close">אחר כך</button>`;
+      save('hb.monthlyPopupDay', today);
+    } else return;
+    popup.showModal();
   }
   const sourcesList = list =>`<ol class="sources">${list.map((s, n) => `<li id="src-${n}"><a href="${esc(s.url)}" target="_blank" rel="noopener">${T(s.title)}</a> <span class="muted small">נבדק ב-${T(fmt(s.checked))}</span></li>`).join('')}</ol>`;
 
@@ -329,7 +389,7 @@ input[type=date]::-webkit-date-and-time-value { text-align: right; }
       const n = E.diffDays(today, f);
       html += `<p class="lead">${n > 1 ? `עוד ${days(n)} לנחיתה בבית` : n === 1 ? 'מחר נוחתים בבית' : n === 0 ? 'היום נוחתים בבית. נסיעה טובה!' : 'ברוך שובך הביתה'}</p>`;
     }
-    html += monthlyCard(today);
+    html += monthlyCard(today) + pushCard(today);
     if (!ds.length) html += invite();
     else if (!next.length) html += '<section class="card"><h2>אין מועדים קרובים</h2><p class="muted">כל המועדים שחישבנו כבר עברו. אפשר לעדכן תאריכים ב"הפרטים שלי".</p></section>';
     else {
@@ -448,7 +508,8 @@ input[type=date]::-webkit-date-and-time-value { text-align: right; }
       + `<p class="muted">גרסה ${T(C.meta.version)} · התוכן נבדק מול מקורות רשמיים ב-${T(fmt(C.meta.verifiedAt))}</p>`
       + '<section class="card"><h2>זה לא ייעוץ משפטי</h2><p>הכללים בתאילנד משתנים לעתים קרובות, ולכן ליד כל עובדה יש מקור ותאריך בדיקה. בנושאי מס וביטוח לאומי בישראל האפליקציה מסבירה ומכינה שאלות, ולא מכריעה: את ההחלטה מקבל יועץ מס.</p>'
       + `<p class="small">ליד חלק מהעובדות יש תגית:${chip('unverified')} אין מקור רשמי שמאשר, או שמקורות רשמיים סותרים.${chip('discretion')} ההחלטה בידי הפקיד.${chip('varies')} הנוהל שונה ממשרד למשרד.</p></section>`
-      + '<section class="card"><h2>פרטיות</h2><p>בלי אנליטיקס ובלי פרסומות. הפרטים שלך נשמרים רק בטלפון. האפליקציה לא שולחת שום דבר לשרתים אחרים, וקישורים לאתרים רשמיים נפתחים רק כשאתה מקיש עליהם.</p></section>'
+      + '<section class="card"><h2>פרטיות</h2><p>בלי אנליטיקס ובלי פרסומות. הפרטים שלך נשמרים רק בטלפון, והאפליקציה לא שולחת אותם לשום מקום. קישורים לאתרים רשמיים נפתחים רק כשאתה מקיש עליהם.</p><p>אם תפעיל התראות, הטלפון נרשם לשירות ההתראות של אפל, והקוד שתשלח נשמר אצל מי שמתחזק את האפליקציה, רק כדי לשלוח לך הודעות.</p></section>'
+      + `<section class="card"><h2>התראות</h2>${pushAbout()}</section>`
       + '<section class="card"><h2>השיטה</h2><p>מבנה המדריכים (בקצרה, צעד אחר צעד, מלכודות, מקור ותאריך בדיקה) בהשראת כל זכות, kolzchut.org.il. אין קשר רשמי.</p></section>'
       + '<h2 class="stage">מקורות</h2>';
     html += guides.map(g => `<details class="card"><summary>${T(g.title)}</summary>${sourcesList(g.sources)}</details>`).join('');
@@ -544,8 +605,12 @@ input[type=date]::-webkit-date-and-time-value { text-align: right; }
     else if (a === 'ics-all') { const today = todayISO(); downloadICS(deadlinesNow().filter(d => (d.end || d.date) >= today), 'haderech-habayta.ics'); }
     else if (a === 'copy') copyDeadlines();
     else if (a === 'print') printSheet();
-    else if (a === 'monthly' && navigator.onLine === false) { e.preventDefault(); toast('אין חיבור לאינטרנט. נסה שוב כשתהיה מחובר.'); } // nothing can be sent: keep the card
-    else if (a === 'monthly') { save('hb.monthlyAsked', todayISO()); setTimeout(() => { render(true); toast('תודה. הכרטיס יחזור בעוד חודש.'); }, 300); } // the link still opens WhatsApp
+    else if ((a === 'monthly' || a === 'push-sent') && navigator.onLine === false) { e.preventDefault(); closePopup(); toast('אין חיבור לאינטרנט. נסה שוב כשתהיה מחובר.'); } // nothing can be sent: keep the card
+    else if (a === 'monthly') { save('hb.monthlyAsked', todayISO()); closePopup(); setTimeout(() => { render(true); toast('תודה. הכרטיס יחזור בעוד חודש.'); }, 300); } // the link still opens WhatsApp
+    else if (a === 'push-sent') { save('hb.pushSent', load('hb.pushCode', null)); setTimeout(() => { render(true); toast('תודה. ההודעות יתחילו להגיע אחרי שהקוד יוגדר.'); }, 300); }
+    else if (a === 'push-on') pushOn();
+    else if (a === 'push-later') { save('hb.pushLater', todayISO()); render(true); }
+    else if (a === 'popup-close') closePopup();
     else if (a === 'install-done') { save('hb.installSeen', true); location.hash = '#home'; }
     else if (a === 'wipe' && confirm('למחוק מהטלפון את כל הפרטים והסימונים?')) { profile = {}; done = {}; save('hb.profile', profile); save('hb.checklist', done); render(); toast('נמחק'); }
   });
@@ -577,9 +642,11 @@ input[type=date]::-webkit-date-and-time-value { text-align: right; }
   document.addEventListener('visibilitychange', () => {
     const typing = document.activeElement && document.activeElement.tagName === 'INPUT';
     if (document.visibilityState === 'visible' && todayISO() !== renderedDay && !typing) render(true);
+    if (document.visibilityState === 'visible' && !typing) maybePopup(); // not over an open date picker: next time
   });
   showBanner();
   render();
+  maybePopup();
 
   // Offline and updates: sw.js caches everything. A new version waits until he taps the banner.
   if ('serviceWorker' in navigator) {
@@ -597,6 +664,13 @@ input[type=date]::-webkit-date-and-time-value { text-align: right; }
         w.addEventListener('statechange', () => { if (w.state === 'installed') offer(w); });
       });
       document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') reg.update().catch(() => {}); });
+      // If iOS dropped or replaced the subscription, the stored code is stale: show the notifications card again.
+      if (PUSH_OK && standalone && Notification.permission === 'granted') {
+        navigator.serviceWorker.ready.then(r => r.pushManager.getSubscription()).then(sub => {
+          const code = sub ? E.pushCode(sub.toJSON()) : null;
+          if (code !== load('hb.pushCode', null)) { save('hb.pushCode', code); render(true); }
+        }).catch(() => {});
+      }
     }).catch(() => {});
     let reloading = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {

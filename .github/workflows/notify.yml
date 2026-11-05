@@ -1,0 +1,66 @@
+# Sends the app's notifications (free, no server): the monthly check reminder, and any message on demand.
+# Logic: .github/scripts/notify.mjs. Secrets (set with tools/push.mjs on the owner's computer):
+# VAPID_PRIVATE_KEY, PUSH_ENDPOINT, PUSH_P256DH, PUSH_AUTH.
+name: notify
+
+on:
+  schedule: # twice a day, because GitHub delays and drops scheduled runs; the reminder still goes out once
+    - cron: '17 6 * * *'
+    - cron: '47 17 * * *'
+  workflow_dispatch:
+    inputs: # read from the event file by the script, never printed to the public log
+      body:
+        description: 'ההודעה'
+        required: false
+      title:
+        description: 'כותרת'
+        required: false
+        default: 'הדרך הביתה'
+      as_of:
+        description: 'בדיקה בלבד: תאריך YYYY-MM-DD להרצת התזכורת החודשית'
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - id: plan
+        run: node .github/scripts/notify.mjs plan
+        env:
+          EVENT: ${{ github.event_name }}
+      - id: sent # the monthly reminder goes out once per month: a cache entry marks it as sent
+        if: steps.plan.outputs.key != ''
+        uses: actions/cache/restore@v6
+        with:
+          path: .sent
+          key: ${{ steps.plan.outputs.key }}
+          lookup-only: true
+      - if: steps.plan.outputs.send == 'yes' && steps.sent.outputs.cache-hit != 'true'
+        run: npm install --no-save --no-package-lock web-push@3.6.7 && node .github/scripts/notify.mjs send
+        env:
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          PUSH_ENDPOINT: ${{ secrets.PUSH_ENDPOINT }}
+          PUSH_P256DH: ${{ secrets.PUSH_P256DH }}
+          PUSH_AUTH: ${{ secrets.PUSH_AUTH }}
+      - if: steps.plan.outputs.key != '' && steps.sent.outputs.cache-hit != 'true'
+        run: mkdir -p .sent && date -u > .sent/at
+      - if: steps.plan.outputs.key != '' && steps.sent.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: .sent
+          key: ${{ steps.plan.outputs.key }}
+
+  keepalive: # GitHub disables scheduled workflows after 60 days without repository activity; re-enabling resets it
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - run: gh workflow enable notify.yml --repo "$GITHUB_REPOSITORY"
+        env:
+          GH_TOKEN: ${{ github.token }}

@@ -1,8 +1,14 @@
 // Built by tools/build-content.mjs from content-src/. Do not edit by hand.
 window.CONTENT = {
  "meta": {
-  "version": "1.1.0",
-  "verifiedAt": "2026-11-04"
+  "version": "1.2.0",
+  "verifiedAt": "2026-11-04",
+  "notice": {
+   "id": "2026-11-06-notifications",
+   "title": "חדש באפליקציה",
+   "text": "פעם בחודש תקפוץ לך תזכורת לשלוח בקשה לבדיקת הכללים, כדי שהכל יישאר מעודכן. ואם האייפון שלך תומך בזה, בדף הבית מחכה כפתור להפעלת התראות: ככה ההודעות יגיעו גם כשהאפליקציה סגורה."
+  },
+  "pushKey": "BFPDx_94ipV7cVUaVGDyV9ytRBBoD-C66eOotuWBfPzMYIGi8N58NVxTosQq5-Alc56kb23DkYb2GThq910FMlk"
  },
  "rules": {
   "NINETY_DAY_INTERVAL": 90,
